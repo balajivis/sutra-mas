@@ -1,0 +1,239 @@
+{
+  "experiment_id": "3ebd50f1",
+  "pattern": "contract_net",
+  "benchmark": "planning",
+  "model": "claude-opus-4-6",
+  "num_agents": 4,
+  "num_rounds": 3,
+  "total_tokens": 38756,
+  "wall_time_seconds": 382.18269419670105,
+  "quality_score": 72.0,
+  "token_efficiency": 1.857776860357106,
+  "final_output": "\n\n# Comprehensive Development Plan: Multi-Tenant Document Intelligence SaaS\n\n## Executive Summary\n\nThis document is the complete, execution-ready plan for building a multi-tenant SaaS application that enables organizations to upload documents (PDF, DOCX), extract text, generate AI-powered summaries, and ask questions about documents using Retrieval-Augmented Generation (RAG). The plan is designed for a small team of 4 engineers (2 backend, 1 frontend, 1 DevOps) to deliver an MVP in 8 weeks and a full product in 16 weeks, targeting 100 tenants, 1,000 users, and up to 10,000 documents per tenant.\n\n**Key Architectural Decisions:**\n- **Modular monolith** (FastAPI) for MVP, with clear module boundaries enabling future microservice extraction\n- **Shared PostgreSQL database with Row-Level Security (RLS)** for tenant isolation\n- **pgvector extension** for vector embeddings within PostgreSQL (avoiding a separate vector DB)\n- **AWS ECS Fargate** for compute, **SQS + Celery** for async processing\n- **AWS Cognito** for identity management with custom JWT claims for tenant context\n- **React SPA** served via CloudFront with a clean REST API contract\n\n---\n\n## Table of Contents\n\n1. [System Architecture & Multi-Tenancy Design](#1-system-architecture--multi-tenancy-design)\n2. [Document Processing & RAG Pipeline](#2-document-processing--rag-pipeline)\n3. [Authentication, Authorization & RBAC](#3-authentication-authorization--rbac)\n4. [API Design & Frontend Architecture](#4-api-design--frontend-architecture)\n5. [Project Plan, MVP Scoping & DevOps Strategy](#5-project-plan-mvp-scoping--devops-strategy)\n6. [Cross-Cutting Concerns & Risk Mitigation](#6-cross-cutting-concerns--risk-mitigation)\n\n---\n\n## 1. System Architecture & Multi-Tenancy Design\n\n### 1.1 High-Level System Architecture\n\n```\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                              CLIENTS                                        \u2502\n\u2502  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510                      \u2502\n\u2502  \u2502 React SPA    \u2502  \u2502 Mobile App   \u2502  \u2502 API Clients  \u2502                      \u2502\n\u2502  \u2502 (CloudFront) \u2502  \u2502 (Future)     \u2502  \u2502 (Future)     \u2502                      \u2502\n\u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518                      \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n          \u2502                  \u2502                  \u2502\n          \u25bc                  \u25bc                  \u25bc\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                         EDGE & INGRESS                                      \u2502\n\u2502  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510    \u2502\n\u2502  \u2502              AWS CloudFront (CDN + WAF)                             \u2502    \u2502\n\u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518    \u2502\n\u2502  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510    \u2502\n\u2502  \u2502         Application Load Balancer (ALB) - HTTPS termination        \u2502    \u2502\n\u2502  \u2502         Path-based routing: /api/* \u2192 API, /* \u2192 S3/CloudFront       \u2502    \u2502\n\u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518    \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                              \u2502\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                      APPLICATION TIER (ECS Fargate)                         \u2502\n\u2502                                                                             \u2502\n\u2502  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510    \u2502\n\u2502  \u2502                    API Service (2-4 tasks)                          \u2502    \u2502\n\u2502  \u2502  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510 \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510 \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510 \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510 \u2502    \u2502\n\u2502  \u2502  \u2502 Auth &    \u2502 \u2502 Document  \u2502 \u2502 Tenant &  \u2502 \u2502 RAG Query          \u2502 \u2502    \u2502\n\u2502  \u2502  \u2502 RBAC      \u2502 \u2502 Management\u2502 \u2502 User Mgmt \u2502 \u2502 Module             \u2502 \u2502    \u2502\n\u2502  \u2502  \u2502 Module    \u2502 \u2502 Module    \u2502 \u2502 Module    \u2502 \u2502                    \u2502 \u2502    \u2502\n\u2502  \u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518 \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518 \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518 \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518 \u2502    \u2502\n\u2502  \u2502  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510 \u2502    \u2502\n\u2502  \u2502  \u2502         Shared: Middleware (tenant context, auth, logging)    \u2502 \u2502    \u2502\n\u2502  \u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518 \u2502    \u2502\n\u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518    \u2502\n\u2502                                                                             \u2502\n\u2502  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510    \u2502\n\u2502  \u2502                Worker Service (2-6 tasks, auto-scaling)            \u2502    \u2502\n\u2502  \u2502  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510 \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510 \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510    \u2502    \u2502\n\u2502  \u2502  \u2502 Text          \u2502 \u2502 Embedding        \u2502 \u2502 Summary            \u2502    \u2502    \u2502\n\u2502  \u2502  \u2502 Extraction    \u2502 \u2502 Generation       \u2502 \u2502 Generation         \u2502    \u2502    \u2502\n\u2502  \u2502  \u2502 Processor     \u2502 \u2502 Processor        \u2502 \u2502 Processor          \u2502    \u2502    \u2502\n\u2502  \u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518 \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518 \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518    \u2502    \u2502\n\u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518    \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n          \u2502                    \u2502                        \u2502\n          \u25bc                    \u25bc                        \u25bc\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                           DATA TIER                                         \u2502\n\u2502  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510      \u2502\n\u2502  \u2502 RDS PostgreSQL   \u2502  \u2502 S3 Bucket    \u2502  \u2502 ElastiCache Redis        \u2502      \u2502\n\u2502  \u2502 (db.r6g.xlarge)  \u2502  \u2502 (Documents)  \u2502  \u2502 (Session + Cache)        \u2502      \u2502\n\u2502  \u2502 + pgvector       \u2502  \u2502 tenant-id/   \u2502  \u2502                          \u2502      \u2502\n\u2502  \u2502 + RLS policies   \u2502  \u2502 prefix       \u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518      \u2502\n\u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518                                     \u2502\n\u2502  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510     \u2502\n\u2502  \u2502 SQS Queues       \u2502  \u2502 AWS Secrets Manager / SSM Parameter Store   \u2502     \u2502\n\u2502  \u2502 (Processing)     \u2502  \u2502 (API keys, DB creds, tenant configs)        \u2502     \u2502\n\u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518     \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n```\n\n### 1.2 Multi-Tenancy Isolation Strategy: Shared Database with Row-Level Security\n\n**Decision Rationale:**\n\n| Approach | Pros | Cons | Verdict |\n|----------|------|------|---------|\n| **Database-per-tenant** | Strongest isolation | 100 DB instances = massive cost & ops burden | \u274c Rejected |\n| **Schema-per-tenant** | Good isolation | Migration complexity, connection pool bloat | \u274c Rejected |\n| **Shared DB + RLS** | Single schema, low ops overhead, PostgreSQL-native enforcement | Must be carefully implemented | \u2705 Selected |\n\nAt 100 tenants with a 4-person team, operational simplicity is decisive. PostgreSQL RLS provides database-enforced isolation where every query is automatically filtered by `tenant_id`, making it impossible for application bugs to leak data across tenants.\n\n**Three layers of tenant isolation:**\n\n| Layer | Mechanism | Purpose |\n|-------|-----------|---------|\n| **Application** | Middleware extracts `tenant_id` from JWT, sets `SET LOCAL app.current_tenant` on every DB session | First line of defense |\n| **Database** | RLS policies on every tenant-scoped table: `USING (tenant_id = current_setting('app.current_tenant')::uuid)` | Enforced even if application code has bugs |\n| **Storage** | S3 keys prefixed with `tenants/{tenant_id}/` + bucket policy conditions | File-level isolation |\n\n### 1.3 Core Data Model\n\n```sql\n-- Tenant table (no RLS - managed by super-admin)\nCREATE TABLE tenants (\n    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n    name VARCHAR(255) NOT NULL,\n    slug VARCHAR(100) UNIQUE NOT NULL,\n    plan VARCHAR(50) DEFAULT 'free',\n    settings JSONB DEFAULT '{}',\n    is_active BOOLEAN DEFAULT true,\n    created_at TIMESTAMPTZ DEFAULT NOW(),\n    updated_at TIMESTAMPTZ DEFAULT NOW()\n);\n\n-- Users table (RLS enabled)\nCREATE TABLE users (\n    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n    tenant_id UUID NOT NULL REFERENCES tenants(id),\n    email VARCHAR(255) NOT NULL,\n    full_name VARCHAR(255),\n    role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'editor', 'viewer')),\n    cognito_sub VARCHAR(255) UNIQUE,\n    is_active BOOLEAN DEFAULT true,\n    created_at TIMESTAMPTZ DEFAULT NOW(),\n    UNIQUE(tenant_id, email)\n);\n\n-- Documents table (RLS enabled)\nCREATE TABLE documents (\n    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n    tenant_id UUID NOT NULL REFERENCES tenants(id),\n    uploaded_by UUID NOT NULL REFERENCES users(id),\n    filename VARCHAR(500) NOT NULL,\n    content_type VARCHAR(100) NOT NULL,\n    file_size_bytes BIGINT,\n    s3_key VARCHAR(1000) NOT NULL,\n    status VARCHAR(30) DEFAULT 'uploaded'\n        CHECK (status IN ('uploaded','extracting','chunking','embedding','summarizing','ready','failed')),\n    extracted_text TEXT,\n    summary TEXT,\n    page_count INTEGER,\n    processing_error TEXT,\n    created_at TIMESTAMPTZ DEFAULT NOW(),\n    updated_at TIMESTAMPTZ DEFAULT NOW()\n);\n\n-- Document chunks for RAG\nCREATE TABLE document_chunks (\n    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n    tenant_id UUID NOT NULL REFERENCES tenants(id),\n    document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,\n    chunk_index INTEGER NOT NULL,\n    content TEXT NOT NULL,\n    token_count INTEGER,\n    page_number INTEGER,\n    metadata JSONB DEFAULT '{}',\n    embedding vector(1536),  -- OpenAI ada-002 dimensions\n    created_at TIMESTAMPTZ DEFAULT NOW()\n);\n\n-- HNSW index for fast vector similarity search\nCREATE INDEX idx_chunks_embedding ON document_chunks\n    USING hnsw (embedding vector_cosine_ops)\n    WITH (m = 16, ef_construction = 64);\n\n-- Composite index for tenant-scoped vector queries\nCREATE INDEX idx_chunks_tenant_doc ON document_chunks(tenant_id, document_id);\n\n-- Q&A conversation history\nCREATE TABLE qa_sessions (\n    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n    tenant_id UUID NOT NULL REFERENCES tenants(id),\n    user_id UUID NOT NULL REFERENCES users(id),\n    document_id UUID NOT NULL REFERENCES documents(id),\n    question TEXT NOT NULL,\n    answer TEXT NOT NULL,\n    source_chunks JSONB,  -- [{chunk_id, content_preview, relevance_score}]\n    model_used VARCHAR(100),\n    tokens_used INTEGER,\n    created_at TIMESTAMPTZ DEFAULT NOW()\n);\n\n-- Enable RLS on all tenant-scoped tables\nALTER TABLE users ENABLE ROW LEVEL SECURITY;\nALTER TABLE documents ENABLE ROW LEVEL SECURITY;\nALTER TABLE document_chunks ENABLE ROW LEVEL SECURITY;\nALTER TABLE qa_sessions ENABLE ROW LEVEL SECURITY;\n\n-- RLS Policy (applied to each table)\nCREATE POLICY tenant_isolation ON documents\n    FOR ALL\n    USING (tenant_id = current_setting('app.current_tenant')::uuid);\n-- (Repeat for users, document_chunks, qa_sessions)\n```\n\n### 1.4 Technology Stack Summary\n\n| Layer | Technology | Justification |\n|-------|-----------|---------------|\n| **API Framework** | FastAPI (Python 3.11+) | Async support, auto-OpenAPI docs, type safety via Pydantic |\n| **ORM** | SQLAlchemy 2.0 + Alembic | Mature, async support, excellent PostgreSQL integration |\n| **Database** | RDS PostgreSQL 15 + pgvector | Single DB for relational + vector data, RLS support |\n| **Cache** | ElastiCache Redis | Session store, API response cache, rate limiting |\n| **Task Queue** | Celery + SQS | Robust async processing, SQS = managed broker |\n| **Object Storage** | S3 with KMS encryption | Document storage with tenant-prefixed keys |\n| **Compute** | ECS Fargate | No cluster management, per-task scaling |\n| **Frontend** | React 18 + Vite + TypeScript | Modern tooling, strong ecosystem |\n| **CDN** | CloudFront | Static asset delivery, API caching |\n| **Identity** | AWS Cognito | Managed auth, MFA, OIDC support |\n| **IaC** | Terraform | Reproducible, team-friendly infrastructure |\n| **CI/CD** | GitHub Actions | Integrated with repo, free tier sufficient |\n\n---\n\n## 2. Document Processing & RAG Pipeline\n\n### 2.1 Pipeline Architecture\n\n```\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510    \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510    \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510    \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502  Upload   \u2502\u2500\u2500\u2500\u25b6\u2502  SQS     \u2502\u2500\u2500\u2500\u25b6\u2502  Celery   \u2502\u2500\u2500\u2500\u25b6\u2502  Processing Stages      \u2502\n\u2502  API      \u2502    \u2502  Queue   \u2502    \u2502  Worker   \u2502    \u2502                          \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518    \u2502  1. Text Extraction      \u2502\n     \u2502                               \u2502            \u2502  2. Chunking             \u2502\n     \u25bc                               \u2502            \u2502  3. Embedding Generation \u2502\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510                         \u2502            \u2502  4. Summarization        \u2502\n\u2502  S3      \u2502\u25c0\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518            \u2502  5. Store in pgvector    \u2502\n\u2502  Bucket  \u2502                                      \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518                                              \u2502\n                                                          \u25bc\n                                              \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n                                              \u2502  PostgreSQL + pgvector\u2502\n                                              \u2502  (chunks, embeddings) \u2502\n                                              \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n```\n\n### 2.2 Upload Flow\n\n```python\n# app/api/v1/documents.py\n@router.post(\"/upload\", response_model=DocumentUploadResponse)\nasync def upload_document(\n    file: UploadFile = File(...),\n    current_user: User = Depends(require_role([\"admin\", \"editor\"])),\n    doc_service: DocumentService = Depends(),\n):\n    # Validate file type (PDF, DOCX only)\n    if file.content_type not",
+  "agent_stats": {
+    "manager": {
+      "role": "coordinator",
+      "tokens_in": 11041,
+      "tokens_out": 5733,
+      "messages_sent": 10,
+      "messages_received": 15
+    },
+    "specialist_a": {
+      "role": "bidder",
+      "tokens_in": 3266,
+      "tokens_out": 7362,
+      "messages_sent": 5,
+      "messages_received": 3
+    },
+    "specialist_b": {
+      "role": "bidder",
+      "tokens_in": 2933,
+      "tokens_out": 5159,
+      "messages_sent": 5,
+      "messages_received": 2
+    },
+    "specialist_c": {
+      "role": "bidder",
+      "tokens_in": 1982,
+      "tokens_out": 1280,
+      "messages_sent": 5,
+      "messages_received": 0
+    }
+  },
+  "metadata": {
+    "sub_tasks": 5,
+    "awards": {
+      "1": "specialist_b",
+      "2": "specialist_b",
+      "3": "specialist_a",
+      "4": "specialist_a",
+      "5": "specialist_a"
+    },
+    "llm_stats": {
+      "model": "claude-opus-4-6",
+      "total_calls": 22,
+      "total_tokens_in": 19222,
+      "total_tokens_out": 19534,
+      "total_tokens": 38756,
+      "total_latency_ms": 382178.47084999084,
+      "avg_latency_ms": 17371.748674999584
+    }
+  },
+  "messages": [
+    {
+      "sender": "manager",
+      "receiver": "__broadcast__",
+      "performative": "cfp",
+      "content": "CALL FOR PROPOSALS \u2014 Sub-task 1: System Architecture & Multi-Tenancy Design\nDescription: Design the overall system architecture for the multi-tenant SaaS application, including the multi-tenancy isolation strategy, database schema design, and AWS infrastructure topology. This sub-task must define how tenant isolation is achieved at the data layer (e.g., shared database with row-level security vs. schema-per-tenant), the high-level service decomposition (monolith vs. microservices for MVP), inter",
+      "token_count": 0
+    },
+    {
+      "sender": "specialist_a",
+      "receiver": "manager",
+      "performative": "propose",
+      "content": "```json\n{\n  \"capability_score\": 9,\n  \"justification\": \"This sub-task is squarely in my wheelhouse \u2014 deep analysis, technical accuracy, and edge-case identification are exactly what system architecture and multi-tenancy design demand. I have extensive expertise in: (1) AWS service selection and infrastructure topology design (ECS/Fargate, RDS, S3, SQS, API Gateway, CloudFront, VPC networking), (2) PostgreSQL multi-tenancy patterns including row-level security (RLS) policies, schema design, and pe",
+      "token_count": 665
+    },
+    {
+      "sender": "specialist_b",
+      "receiver": "manager",
+      "performative": "propose",
+      "content": "```json\n{\n  \"capability_score\": 9,\n  \"justification\": \"I have deep expertise in AWS architecture, multi-tenant SaaS design patterns, PostgreSQL schema design with RLS, and infrastructure cost modeling. I can deliver all seven required artifacts with detailed justifications, including the trade-off analysis between isolation strategies (shared DB with RLS vs. schema-per-tenant), concrete DDL for the database schema, S3 bucket policies with tenant-scoped prefixes, and realistic AWS cost estimates ",
+      "token_count": 661
+    },
+    {
+      "sender": "specialist_c",
+      "receiver": "manager",
+      "performative": "propose",
+      "content": "```json\n{\n  \"capability_score\": 9,\n  \"justification\": \"I have deep expertise in multi-tenant SaaS architecture design on AWS, including hands-on experience with PostgreSQL row-level security, tenant isolation patterns, and AWS service selection trade-offs. My creative problem-solving strength is directly applicable here \u2014 multi-tenancy design requires navigating complex trade-offs (isolation vs. cost vs. complexity) and I excel at evaluating implications of each approach at the stated scale (100",
+      "token_count": 650
+    },
+    {
+      "sender": "manager",
+      "receiver": "specialist_b",
+      "performative": "accept",
+      "content": "AWARDED: Sub-task 1 \u2014 System Architecture & Multi-Tenancy Design",
+      "token_count": 0
+    },
+    {
+      "sender": "manager",
+      "receiver": "__broadcast__",
+      "performative": "cfp",
+      "content": "CALL FOR PROPOSALS \u2014 Sub-task 2: Document Processing & RAG Pipeline Design\nDescription: Design the complete document ingestion, text extraction, summarization, and Retrieval-Augmented Generation (RAG) pipeline. This covers how uploaded PDFs and DOCX files are processed asynchronously, how text is extracted and chunked, how vector embeddings are generated and stored, how summaries are produced, and how the question-answering system retrieves relevant chunks and generates answers. Must specify the",
+      "token_count": 0
+    },
+    {
+      "sender": "specialist_a",
+      "receiver": "manager",
+      "performative": "propose",
+      "content": "```json\n{\n  \"capability_score\": 9,\n  \"justification\": \"This sub-task sits squarely in my wheelhouse of deep technical analysis and system design. I have extensive knowledge of RAG pipeline architectures including chunking strategies (recursive character splitting, semantic chunking, overlap tuning), embedding model tradeoffs (OpenAI ada-002 vs Cohere vs open-source models like BGE/E5), vector store options (pgvector for multi-tenant PostgreSQL setups vs Pinecone/Weaviate), and LLM integration pa",
+      "token_count": 689
+    },
+    {
+      "sender": "specialist_b",
+      "receiver": "manager",
+      "performative": "propose",
+      "content": "```json\n{\n  \"capability_score\": 9,\n  \"justification\": \"I have deep expertise in RAG pipeline architecture, document processing systems, and LLM integration patterns. I can deliver comprehensive designs covering text extraction tooling (PyPDF2, python-docx, Tika), chunking strategies (recursive character splitting with optimal size/overlap tradeoffs), embedding model selection (OpenAI ada-002 vs Cohere vs open-source alternatives), vector store design with tenant isolation (pgvector with RLS or n",
+      "token_count": 626
+    },
+    {
+      "sender": "specialist_c",
+      "receiver": "manager",
+      "performative": "propose",
+      "content": "```json\n{\n  \"capability_score\": 9,\n  \"justification\": \"This sub-task sits squarely in my wheelhouse \u2014 it requires creative architectural problem-solving (designing a multi-stage async pipeline with many interacting components), identifying implications (tenant isolation in vector stores, chunking strategy trade-offs, cost/latency implications of embedding model choices, failure cascading), and practical recommendations (specific technology picks, concrete parameters, prompt templates, retry poli",
+      "token_count": 674
+    },
+    {
+      "sender": "manager",
+      "receiver": "specialist_b",
+      "performative": "accept",
+      "content": "AWARDED: Sub-task 2 \u2014 Document Processing & RAG Pipeline Design",
+      "token_count": 0
+    },
+    {
+      "sender": "manager",
+      "receiver": "__broadcast__",
+      "performative": "cfp",
+      "content": "CALL FOR PROPOSALS \u2014 Sub-task 3: Authentication, Authorization & RBAC System Design\nDescription: Design the complete authentication and authorization system including multi-tenant user management, role-based access control (admin, editor, viewer), tenant onboarding flows, and API security. This covers identity provider selection (e.g., AWS Cognito, custom JWT), how tenant context is established per request, how RBAC permissions map to API endpoints and document operations, and how tenant admins ",
+      "token_count": 0
+    },
+    {
+      "sender": "specialist_a",
+      "receiver": "manager",
+      "performative": "propose",
+      "content": "```json\n{\n  \"capability_score\": 9,\n  \"justification\": \"I have deep expertise in designing multi-tenant authentication and authorization systems, including hands-on experience with AWS Cognito, custom JWT implementations, and RBAC frameworks. I can deliver comprehensive technical designs covering identity provider selection with clear trade-off analysis, tenant context propagation patterns (middleware-based tenant scoping using JWT custom claims, API gateway context injection, and database-level ",
+      "token_count": 640
+    },
+    {
+      "sender": "specialist_b",
+      "receiver": "manager",
+      "performative": "propose",
+      "content": "```json\n{\n  \"capability_score\": 9,\n  \"justification\": \"I have deep expertise in designing multi-tenant authentication and authorization systems, including extensive experience with AWS Cognito, custom JWT implementations, RBAC modeling, and Python middleware patterns (FastAPI/Django). I've designed tenant isolation strategies at the application layer, built RBAC permission matrices for SaaS platforms, and integrated frontend auth flows in React (context providers, protected routes, token refresh",
+      "token_count": 600
+    },
+    {
+      "sender": "specialist_c",
+      "receiver": "manager",
+      "performative": "propose",
+      "content": "```json\n{\n  \"capability_score\": 9,\n  \"justification\": \"This sub-task sits squarely in my wheelhouse \u2014 it demands creative problem-solving around multi-tenant isolation patterns, practical security architecture decisions with real-world trade-offs, and the ability to trace implications of each design choice (e.g., how choosing Cognito User Pools vs. custom JWT ripples through tenant context propagation, middleware design, and frontend token handling). I have deep experience designing RBAC systems",
+      "token_count": 634
+    },
+    {
+      "sender": "manager",
+      "receiver": "specialist_a",
+      "performative": "accept",
+      "content": "AWARDED: Sub-task 3 \u2014 Authentication, Authorization & RBAC System Design",
+      "token_count": 0
+    },
+    {
+      "sender": "manager",
+      "receiver": "__broadcast__",
+      "performative": "cfp",
+      "content": "CALL FOR PROPOSALS \u2014 Sub-task 4: API Design & Frontend Architecture\nDescription: Design the complete REST/GraphQL API contract and React frontend architecture. This includes all API endpoints grouped by domain (documents, Q&A, users, tenants), request/response schemas, pagination and filtering strategies, real-time updates for document processing status, and the React application structure including state management, component hierarchy, and key user experience flows (document upload, browsing, ",
+      "token_count": 0
+    },
+    {
+      "sender": "specialist_a",
+      "receiver": "manager",
+      "performative": "propose",
+      "content": "```json\n{\n  \"capability_score\": 9,\n  \"justification\": \"I have deep expertise in REST/GraphQL API design, OpenAPI specification authoring, and React frontend architecture. I can deliver comprehensive endpoint catalogs with precise JSON schemas, status codes, and pagination strategies optimized for multi-tenant scale. I have strong experience with real-time update patterns (WebSocket vs SSE vs polling tradeoffs), modern React state management (React Query + Zustand), and component architecture des",
+      "token_count": 592
+    },
+    {
+      "sender": "specialist_b",
+      "receiver": "manager",
+      "performative": "propose",
+      "content": "```json\n{\n  \"capability_score\": 9,\n  \"justification\": \"I have deep expertise in REST/GraphQL API design, OpenAPI specifications, and React frontend architecture. I can deliver comprehensive API endpoint catalogs with full request/response schemas, pagination/filtering strategies optimized for scale, real-time update patterns (WebSocket/SSE/polling trade-offs), and detailed React application architecture including state management (React Query + Zustand), component hierarchies, and integration pa",
+      "token_count": 535
+    },
+    {
+      "sender": "specialist_c",
+      "receiver": "manager",
+      "performative": "propose",
+      "content": "```json\n{\n  \"capability_score\": 9,\n  \"justification\": \"API design and frontend architecture sit squarely in my strengths: this is fundamentally a creative systems-design problem where the key challenge is anticipating real-world implications (scale at 10K docs/tenant, real-time UX for async processing, multi-tenant isolation) and translating them into practical, implementable contracts. I have deep experience designing REST/GraphQL APIs with OpenAPI specs, choosing appropriate real-time strategi",
+      "token_count": 620
+    },
+    {
+      "sender": "manager",
+      "receiver": "specialist_a",
+      "performative": "accept",
+      "content": "AWARDED: Sub-task 4 \u2014 API Design & Frontend Architecture",
+      "token_count": 0
+    },
+    {
+      "sender": "manager",
+      "receiver": "__broadcast__",
+      "performative": "cfp",
+      "content": "CALL FOR PROPOSALS \u2014 Sub-task 5: Project Plan, MVP Scoping & DevOps Strategy\nDescription: Create the detailed project execution plan including MVP vs. full-product feature scoping, 8-week MVP sprint plan, 16-week full product roadmap, CI/CD pipeline design, infrastructure-as-code strategy, monitoring/observability setup, and team workload distribution across the 4-person team (2 backend, 1 frontend, 1 DevOps). Must define what is in MVP vs. what is deferred, identify critical path items, and spe",
+      "token_count": 0
+    },
+    {
+      "sender": "specialist_a",
+      "receiver": "manager",
+      "performative": "propose",
+      "content": "```json\n{\n  \"capability_score\": 9,\n  \"justification\": \"This sub-task aligns directly with my strengths in deep analysis, technical accuracy, and identifying edge cases. I have extensive knowledge of AWS DevOps toolchains (CodePipeline, GitHub Actions, ECR, ECS), infrastructure-as-code (Terraform and CDK), and observability stacks (CloudWatch, structured logging, distributed tracing). I can produce rigorous MVP scoping with clear inclusion/deferral justifications, realistic week-by-week sprint pl",
+      "token_count": 689
+    },
+    {
+      "sender": "specialist_b",
+      "receiver": "manager",
+      "performative": "propose",
+      "content": "```json\n{\n  \"capability_score\": 9,\n  \"justification\": \"Project planning, MVP scoping, and DevOps strategy are squarely in my wheelhouse. I have deep experience synthesizing technical roadmaps, sprint plans, CI/CD pipeline designs (GitHub Actions, CodePipeline, ECR/ECS), IaC strategies (Terraform and CDK), and observability setups into structured, actionable documents. I can produce detailed week-by-week sprint plans with realistic task assignments across a 4-person team, define clear MVP vs. def",
+      "token_count": 678
+    },
+    {
+      "sender": "specialist_c",
+      "receiver": "manager",
+      "performative": "propose",
+      "content": "```json\n{\n  \"capability_score\": 9,\n  \"justification\": \"This sub-task sits squarely in my wheelhouse of creative problem-solving, identifying implications, and practical recommendations. Project planning at this level is fundamentally about making smart trade-off decisions (MVP vs. deferred), anticipating downstream implications (critical path analysis, risk identification), and producing actionable, concrete recommendations (sprint plans, CI/CD design, IaC strategy). I have deep experience reaso",
+      "token_count": 684
+    },
+    {
+      "sender": "manager",
+      "receiver": "specialist_a",
+      "performative": "accept",
+      "content": "AWARDED: Sub-task 5 \u2014 Project Plan, MVP Scoping & DevOps Strategy",
+      "token_count": 0
+    }
+  ]
+}

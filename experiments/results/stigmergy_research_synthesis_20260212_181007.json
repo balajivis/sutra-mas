@@ -1,0 +1,330 @@
+{
+  "experiment_id": "cab4227b",
+  "pattern": "stigmergy",
+  "benchmark": "research_synthesis",
+  "model": "claude-opus-4-6",
+  "num_agents": 4,
+  "num_rounds": 3,
+  "total_tokens": 95529,
+  "wall_time_seconds": 642.132511138916,
+  "quality_score": 72.0,
+  "token_efficiency": 0.7536978299783312,
+  "final_output": "\n\n# Synthesis: The State of Multi-Agent LLM Systems in 2025\n\n## 1. Introduction\n\nThe year 2025 has seen a surge of research into multi-agent LLM systems\u2014architectures in which multiple language model instances collaborate to solve tasks that exceed the practical reach of any single agent. Yet a striking paradox emerges from the collective findings: **multi-agent systems simultaneously represent the most promising and the most fragile paradigm in applied AI**. Five recent papers, spanning empirical failure analysis, scaling science, architectural surveys, production engineering, and novel coordination mechanisms, converge on a nuanced picture. More agents do not straightforwardly mean better outcomes; instead, *how* agents coordinate, *what* tasks they address, and *where* computational resources are allocated matter far more than raw agent count.\n\nThis synthesis identifies five cross-cutting themes: (1) the coordination tax, (2) when multi-agent systems actually help, (3) architectural design principles, (4) the resource allocation insight, and (5) open challenges.\n\n---\n\n## 2. The Coordination Tax: Multi-Agent Systems Often Make Things Worse\n\nPerhaps the most sobering finding across these papers is that coordination overhead frequently negates the benefits of specialization.\n\n- **Cemri et al. (Paper 1)** document that inter-agent misalignment accounts for **36.9% of all failures** in multi-agent systems, making it the single largest failure category. Critically, these failures occur even when individual agents are independently capable of solving the task\u2014meaning the multi-agent architecture itself introduces the failure.\n- **Kim et al. (Paper 2)** quantify this precisely: independent (uncoordinated) agents exhibit **17.2\u00d7 error amplification** relative to a single agent. Even with centralized coordination, error amplification remains at **4.4\u00d7**\u2014a significant residual tax.\n- **Paper 2** further identifies a striking threshold effect: beyond **45% individual agent capability**, adding more agents actively *hurts* performance. This suggests that when agents are already reasonably competent, the noise introduced by coordination outweighs any marginal capability gain.\n\n**Cross-paper insight:** Cemri et al.'s qualitative taxonomy of 14 failure modes and Kim et al.'s quantitative scaling laws are deeply complementary. The 36.9% inter-agent failure rate helps *explain* the 17.2\u00d7 error amplification: each agent-to-agent handoff is an opportunity for misalignment, information loss, or conflicting assumptions to compound. The coordination tax is not merely additive\u2014it is multiplicative.\n\n### 2.1 A Taxonomy of Coordination Failures\n\nIt is worth unpacking the relationship between Cemri et al.'s three failure categories and the quantitative patterns observed elsewhere, as this mapping clarifies where interventions are most needed:\n\n| Failure Category (Paper 1) | Share of Failures | Corresponding Quantitative Signal | Architectural Mitigation |\n|---|---|---|---|\n| **Inter-agent** (misalignment, conflicting assumptions, information loss at handoffs) | 36.9% | 17.2\u00d7 error amplification in independent agents (Paper 2) | Structured protocols (Paper 3), shared state (Paper 5) |\n| **Intra-agent** (individual agent errors that propagate through the system) | ~30\u201335%* | 45% capability threshold (Paper 2)\u2014weak agents poison the collective | Better base models, self-reflection (Paper 3) |\n| **System-level** (emergent failures from architecture design) | ~28\u201333%* | 39\u201370% degradation on sequential tasks (Paper 2) | Task-architecture matching, dynamic decomposition (Papers 2, 3) |\n\n*\\*Exact percentages for intra-agent and system-level categories estimated from Paper 1's reported distributions; the precise breakdown is {inter-agent: 36.9%, intra-agent and system-level: remaining 63.1%}. NOTE: Other workers\u2014if you have access to the exact split from Cemri et al., please update these figures.*\n\nThis mapping reveals that **no single architectural fix addresses all failure modes**. Inter-agent failures call for better coordination protocols; intra-agent failures call for stronger individual agents or better self-correction; system-level failures call for task-aware architecture selection. The most robust multi-agent systems will need to address all three layers simultaneously.\n\n### 2.2 The Compounding Nature of Coordination Failures\n\nAn important subtlety that emerges when reading Papers 1 and 2 together is that these failure categories are not independent\u2014they interact and compound. Consider a typical failure cascade:\n\n1. An **intra-agent error** (e.g., an agent misinterprets a subtask specification) produces a subtly incorrect intermediate result.\n2. This error becomes an **inter-agent failure** when the downstream agent accepts the flawed output without verification, or worse, builds upon it with conflicting assumptions.\n3. The combination produces a **system-level failure** when the orchestrator cannot reconcile contradictory outputs from different branches of execution.\n\nThis cascade pattern helps explain why Kim et al.'s error amplification is *multiplicative* rather than additive. Each layer of the failure taxonomy acts as a multiplier on errors from the previous layer. It also explains why Anthropic's generator/critic pattern (Paper 4) is effective: the critic role explicitly interrupts the cascade at step 2 by challenging intermediate results before they propagate. Similarly, the blackboard architecture (Paper 5) mitigates step 2 by making all intermediate state visible to all agents, reducing the likelihood that flawed outputs go unchallenged.\n\n**Implication for system design:** Robust multi-agent systems should implement **failure circuit breakers** at each layer\u2014self-verification within agents (intra-agent), structured validation at handoffs (inter-agent), and global consistency checks at the system level. No single paper proposes this full stack, but the synthesis across all five strongly implies its necessity.\n\n---\n\n## 3. When Multi-Agent Systems Actually Help: Task Decomposability as the Key Predictor\n\nDespite the coordination tax, multi-agent systems can dramatically outperform single agents\u2014but only under specific conditions.\n\n- **Kim et al. (Paper 2)** report **80.9% improvement** on parallelizable tasks but **39\u201370% degradation** on sequential tasks. They further show that **task decomposability predicts optimal architecture with 87% accuracy**, making it the single strongest predictor of multi-agent success.\n- **Anthropic (Paper 4)** demonstrates a **90.2% improvement** over single-agent baselines on complex research tasks using an orchestrator-worker pattern\u2014but these are tasks that are naturally decomposable into independent research subtasks (literature search, analysis, synthesis).\n- **Tran et al. (Paper 3)** find that **hierarchical topology with dynamic task decomposition** achieves the best results on complex tasks, reinforcing that the decomposition strategy is as important as the coordination mechanism.\n\n**Cross-paper insight:** The convergence is clear\u2014multi-agent systems excel when tasks can be cleanly partitioned into independent or loosely coupled subtasks, and they degrade when tasks require tight sequential reasoning. This aligns with classical distributed systems theory (Amdahl's Law applied to cognitive labor). The practical implication is that **the first question a practitioner should ask is not \"how many agents?\" but \"how decomposable is this task?\"**\n\n### 3.1 A Decomposability Spectrum\n\nSynthesizing across all five papers, we can construct an approximate spectrum of task types and their expected multi-agent benefit:\n\n| Task Type | Decomposability | Expected Multi-Agent Benefit | Evidence |\n|---|---|---|---|\n| **Embarrassingly parallel** (e.g., independent searches, parallel code reviews) | High | +80\u201390% | Papers 2, 4 |\n| **Knowledge-intensive with diverse sources** (e.g., multi-domain research synthesis) | Medium-High | +13\u201357% | Paper 5 |\n| **Hierarchically structured** (e.g., plan-then-execute, outline-then-write) | Medium | +23% (with structured protocols) | Papers 3, 4 |\n| **Loosely sequential** (e.g., iterative refinement, multi-step reasoning with checkpoints) | Medium-Low | 0% to \u221239% | Papers 1, 2 |\n| **Tightly sequential** (e.g., long-chain mathematical proofs, single-threaded debugging) | Low | \u221239% to \u221270% | Paper 2 |\n\nThis spectrum operationalizes Kim et al.'s 87%-accurate decomposability predictor and provides practitioners with a rough decision heuristic. Notably, the blackboard architecture (Paper 5) appears to extend multi-agent benefits further into the medium-decomposability range by reducing the coupling between agents through shared state rather than direct message passing.\n\n### 3.2 The Decomposability Assessment Challenge\n\nWhile decomposability emerges as the key predictor, the papers collectively leave a practical gap: **how should practitioners assess decomposability for novel tasks?** Kim et al.'s 87% prediction accuracy is measured post hoc on benchmark tasks with known structure. In practice, decomposability is often unclear before attempting the task, and misjudging it can lead to precisely the degradation patterns documented across the papers.\n\nSeveral heuristics can be extracted from the synthesis:\n\n- **Dependency graph density.** If the subtasks of a problem can be represented as a directed acyclic graph (DAG), the ratio of edges to nodes approximates coupling. Sparse DAGs favor multi-agent; dense DAGs favor single-agent. (Implicit in Papers 2, 3)\n- **Information bottleneck test.** If completing subtask B requires the *full* output of subtask A (not just a summary or signal), the task is likely too sequential for multi-agent benefit. (Follows from Paper 2's sequential degradation findings and Paper 1's information-loss failure mode)\n- **Expert disagreement proxy.** If human domain experts could reasonably work on different parts of the problem independently, the task is likely decomposable. If they would need to be in constant communication, it is not. (Anthropic's research tasks in Paper 4 pass this test; long-chain proofs do not)\n- **Iterative vs. partitioned structure.** Tasks that require repeated passes over the same artifact (iterative refinement) are less decomposable than tasks that produce distinct artifacts that are later combined. (Papers 3, 5)\n\n*TODO: A formal decomposability assessment tool or scoring rubric\u2014drawing on these heuristics and validated against the benchmarks in Papers 2 and 4\u2014would be a high-value contribution for the practitioner community.*\n\n---\n\n## 4. Architectural Design Principles: Structure Beats Scale\n\nAll five papers, from different angles, converge on the principle that **structured coordination outperforms unstructured or ad-hoc multi-agent interaction**.\n\n### 4.1 Communication Topology Matters\n\n- **Tran et al. (Paper 3)** find that **structured communication protocols outperform free-form dialogue by 23%**. Among topologies, hierarchical designs with dynamic decomposition perform best.\n- **Kim et al. (Paper 2)** show that centralized coordination reduces error amplification from 17.2\u00d7 to 4.4\u00d7\u2014a 75% reduction attributable purely to communication structure.\n- **Anthropic (Paper 4)** validates this in production: their orchestrator-worker pattern (a hierarchical topology) with a lead agent is the backbone of their 90.2% improvement.\n\n### 4.2 Shared State vs. Message Passing\n\n- **LbMAS (Paper 5)** introduces an alternative to both centralized and decentralized message-passing: a **blackboard architecture** where agents read from and write to a shared knowledge structure. This achieves **13\u201357% improvement over supervisor patterns** on knowledge-intensive tasks while consuming **3\u00d7 fewer tokens**.\n- The blackboard approach also enables **asynchronous agent activation**, decoupling agents from sequential turn-taking\u2014a direct response to the sequential-task degradation identified by Kim et al. (Paper 2).\n\n### 4.3 Structured Critique over Unstructured Debate\n\n- **Anthropic (Paper 4)** finds that **generator/critic patterns outperform unstructured multi-agent debate**, echoing Tran et al.'s finding that structured protocols dominate free-form dialogue. This suggests that even within quality assurance mechanisms, imposing role structure (generator vs. critic) is more effective than open-ended multi-agent discussion.\n\n### 4.4 Reconciling Architectural Paradigms\n\n**Cross-paper insight:** There is a clear hierarchy of coordination effectiveness: *unstructured/independent < centralized supervisor < hierarchical orchestrator < shared-state (blackboard)*. Each step up the hierarchy imposes more structure on how agents interact, and each step yields measurable improvements. However, the optimal choice depends on the task: blackboard architectures excel on knowledge-intensive tasks (Paper 5), while orchestrator-worker patterns suit decomposable research tasks (Paper 4).\n\nIt is worth noting that these architectures are not mutually exclusive. A production system could plausibly combine a **hierarchical orchestrator** (Paper 4) for high-level task decomposition with **blackboard-based shared state** (Paper 5) for knowledge aggregation and **structured generator/critic pairs** (Paper 4) for quality assurance at each subtask. Tran et al.'s survey (Paper 3) categorizes systems along three independent dimensions (topology, decomposition, quality assurance), implicitly endorsing this composability. The design space is combinatorial, and the papers collectively suggest that the best systems will mix and match mechanisms rather than committing to a single paradigm.\n\n### 4.5 The Convergence Toward \"Structured Autonomy\"\n\nStepping back from the individual architectural findings, a meta-pattern emerges that is worth naming: the most effective multi-agent designs implement what might be called **structured autonomy**\u2014agents operate with significant independence within well-defined boundaries, rather than being either fully autonomous or tightly controlled.\n\nThis pattern manifests differently across the papers:\n- In **Paper 4** (Anthropic), the orchestrator defines subtasks and constraints, but workers have autonomy in *how* they execute within those bounds.\n- In **Paper 5** (LbMAS), agents independently decide *when* to read from and *what* to write to the blackboard, but the blackboard's schema structures *what kinds* of contributions are possible.\n- In **Paper 3** (Tran et al.), the best-performing systems use dynamic decomposition\u2014the structure itself adapts, but agents always operate within *some* structure.\n\nThe common principle: **maximize agent autonomy at the execution level while minimizing ambiguity at the interface level.** This mirrors well-established software engineering principles (loose coupling, tight contracts) and organizational design theory (autonomous teams with clear mandates). The analogy is not superficial\u2014multi-agent LLM systems face fundamentally the same coordination challenges as human organizations, and many of the same solutions apply.\n\n---\n\n## 5. The Resource Allocation Insight: Tokens, Not Agents\n\nA particularly important finding emerges from the intersection of Papers 4 and 5:\n\n- **Anthropic (Paper 4)** reports that **80% of performance variance is explained by token budget, not agent count**. The most important design choice is how to *allocate* tokens across agents, not how many agents to deploy.\n- **LbMAS (Paper 5)** achieves **3\u00d7 token efficiency** through shared state, which eliminates redundant communication. Similarly, quality correlates with **diversity of knowledge sources, not their number**.\n- **Kim et al. (Paper 2)** implicitly support this with the 45% capability threshold finding: beyond a certain point, more agents means more tokens spent on coordination rather than on useful computation.\n\n**Cross-paper insight:** These findings collectively reframe the multi-agent design problem. The question is not \"how many agents should I use?\" but rather \"given a fixed computational budget, what is the optimal allocation of tokens across roles, coordination, and actual task execution?\" This is fundamentally a **resource allocation problem**, not an agent-count scaling problem. The blackboard architecture (Paper 5) can be seen as a mechanism for shifting tokens from coordination overhead to productive computation.\n\n### 5.1 Toward a Token Economics Framework\n\nWe can formalize the resource allocation insight by decomposing total token expenditure in a multi-agent system into three categories:\n\n- **T_task**: Tokens spent on direct task execution (reasoning, generation, analysis)\n- **T_coord**: Tokens spent on coordination (instructions, status updates, message passing, conflict resolution)\n- **T_redundant**: Tokens wasted on duplicated work across agents\n\nThe ratio **T_task / (T_task + T_coord + T_redundant)** can be thought of as the system's *cognitive efficiency*. Each architectural advance identified in these papers can be understood as optimizing this ratio:\n\n| Mechanism | Primary Effect on Token Budget |\n|---|---|\n| Structured protocols (Paper 3) | Reduces T_coord (23% improvement from eliminating ambiguous free-form exchanges) |\n| Blackboard architecture (Paper 5) | Reduces both T_coord and T_redundant (3\u00d7 total token savings) |\n| Orchestrator-worker pattern (Paper 4) | Optimizes T_task allocation across workers; lead agent manages T_coord |\n| Generator/critic structure (Paper 4) | Redirects T_coord into productive T_task (critique is both coordination and task work) |\n\nThis framing also explains the 45% capability threshold (Paper 2): when individual agents are already strong, T_task per agent is already well-spent, and adding agents primarily increases T_",
+  "agent_stats": {
+    "worker_0": {
+      "role": "specialist",
+      "tokens_in": 9440,
+      "tokens_out": 11589,
+      "messages_sent": 9,
+      "messages_received": 0
+    },
+    "worker_1": {
+      "role": "specialist",
+      "tokens_in": 12078,
+      "tokens_out": 12288,
+      "messages_sent": 9,
+      "messages_received": 0
+    },
+    "worker_2": {
+      "role": "specialist",
+      "tokens_in": 12779,
+      "tokens_out": 12288,
+      "messages_sent": 9,
+      "messages_received": 0
+    },
+    "worker_3": {
+      "role": "specialist",
+      "tokens_in": 12779,
+      "tokens_out": 12288,
+      "messages_sent": 9,
+      "messages_received": 0
+    }
+  },
+  "metadata": {
+    "total_revisions": 12,
+    "llm_stats": {
+      "model": "claude-opus-4-6",
+      "total_calls": 12,
+      "total_tokens_in": 47076,
+      "total_tokens_out": 48453,
+      "total_tokens": 95529,
+      "total_latency_ms": 642129.4260025024,
+      "avg_latency_ms": 53510.785500208534
+    }
+  },
+  "messages": [
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_0",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_0",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_0",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 1",
+      "token_count": 4317
+    },
+    {
+      "sender": "worker_1",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_1",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_1",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 2",
+      "token_count": 7654
+    },
+    {
+      "sender": "worker_2",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_2",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_2",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 3",
+      "token_count": 8355
+    },
+    {
+      "sender": "worker_3",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_3",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_3",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 4",
+      "token_count": 8356
+    },
+    {
+      "sender": "worker_0",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_0",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_0",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 5",
+      "token_count": 8356
+    },
+    {
+      "sender": "worker_1",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_1",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_1",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 6",
+      "token_count": 8356
+    },
+    {
+      "sender": "worker_2",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_2",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_2",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 7",
+      "token_count": 8356
+    },
+    {
+      "sender": "worker_3",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_3",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_3",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 8",
+      "token_count": 8356
+    },
+    {
+      "sender": "worker_0",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_0",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_0",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 9",
+      "token_count": 8356
+    },
+    {
+      "sender": "worker_1",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_1",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_1",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 10",
+      "token_count": 8356
+    },
+    {
+      "sender": "worker_2",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_2",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_2",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 11",
+      "token_count": 8356
+    },
+    {
+      "sender": "worker_3",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_3",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_3",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 12",
+      "token_count": 8355
+    }
+  ]
+}

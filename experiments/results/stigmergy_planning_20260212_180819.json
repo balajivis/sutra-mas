@@ -1,0 +1,330 @@
+{
+  "experiment_id": "8a3f497c",
+  "pattern": "stigmergy",
+  "benchmark": "planning",
+  "model": "claude-opus-4-6",
+  "num_agents": 4,
+  "num_rounds": 3,
+  "total_tokens": 96365,
+  "wall_time_seconds": 521.9389090538025,
+  "quality_score": 62.0,
+  "token_efficiency": 0.6433871218803507,
+  "final_output": "\n\n# Task\n\nPlan a multi-tenant SaaS application with these requirements:\n\n1. **Core Feature**: Users upload documents (PDF, DOCX), the system extracts text, generates summaries, answers questions about the documents using RAG.\n\n2. **Multi-tenancy**: Each tenant has isolated data. Tenants can have multiple users with role-based access (admin, editor, viewer).\n\n3. **Scale Target**: 100 tenants, 1000 users, 10,000 documents per tenant.\n\n4. **Tech Constraints**: Python backend, React frontend, PostgreSQL database, must run on AWS.\n\n5. **Timeline**: MVP in 8 weeks, full product in 16 weeks.\n\n6. **Budget**: Small team (2 backend, 1 frontend, 1 DevOps).\n\nProduce a comprehensive plan that a development team could execute.\n\n---\n\n# Working Document\n\n## 1. Architecture Overview\n\n### 1.1 High-Level System Diagram\n\n```\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                        React Frontend                           \u2502\n\u2502              (S3 + CloudFront static hosting)                   \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                           \u2502 HTTPS (REST + WebSocket for status)\n                           \u25bc\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                    AWS Application Load Balancer                \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                           \u25bc\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502              API Layer (FastAPI on ECS Fargate)                  \u2502\n\u2502   \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510       \u2502\n\u2502   \u2502 Auth &   \u2502  \u2502  Document    \u2502  \u2502   RAG / Q&A        \u2502       \u2502\n\u2502   \u2502 Tenancy  \u2502  \u2502  Management  \u2502  \u2502   Service           \u2502       \u2502\n\u2502   \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518       \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n       \u2502              \u2502                   \u2502\n       \u25bc              \u25bc                   \u25bc\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510 \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502 PostgreSQL \u2502 \u2502  S3 Bucket  \u2502  \u2502  Vector Store        \u2502\n\u2502  (RDS)     \u2502 \u2502 (Documents) \u2502  \u2502  (pgvector on RDS)   \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518 \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                      \u2502\n                      \u25bc\n       \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n       \u2502  Async Worker (Celery    \u2502\n       \u2502  on ECS Fargate)         \u2502\n       \u2502  - Text extraction       \u2502\n       \u2502  - Embedding generation  \u2502\n       \u2502  - Summary generation    \u2502\n       \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                    \u2502\n                    \u25bc\n       \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n       \u2502  SQS Queue / Redis       \u2502\n       \u2502  (Task broker)           \u2502\n       \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n```\n\n### 1.2 Key Architectural Decisions\n\n| Decision | Choice | Rationale |\n|---|---|---|\n| API Framework | FastAPI | Async support, auto-docs, Pydantic validation, Python ecosystem |\n| Multi-tenancy model | Shared DB, shared schema with `tenant_id` column + RLS | Cost-effective at 100 tenants; PostgreSQL Row-Level Security enforces isolation |\n| Vector store | pgvector extension on same RDS | Reduces infra complexity; sufficient at our scale (~1M vectors per tenant) |\n| Async processing | Celery + SQS (or Redis) | Document processing is CPU/IO-heavy; must be async |\n| LLM provider | OpenAI API (GPT-4o / embeddings) | Fastest to MVP; can swap to Bedrock later |\n| Container orchestration | ECS Fargate | Serverless containers; simpler than EKS for small team |\n| Auth | AWS Cognito + custom RBAC | Managed auth reduces build time; custom RBAC layer for tenant roles |\n\n---\n\n## 2. Data Model\n\n### 2.1 Core Database Schema\n\n```sql\n-- Enable required extensions\nCREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";\nCREATE EXTENSION IF NOT EXISTS \"pgvector\";\n\n-- ============================================================\n-- TENANTS\n-- ============================================================\nCREATE TABLE tenants (\n    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    name VARCHAR(255) NOT NULL,\n    slug VARCHAR(100) UNIQUE NOT NULL,\n    plan VARCHAR(50) DEFAULT 'free',          -- free, pro, enterprise\n    settings JSONB DEFAULT '{}',\n    max_documents INT DEFAULT 10000,\n    max_users INT DEFAULT 50,\n    created_at TIMESTAMPTZ DEFAULT NOW(),\n    updated_at TIMESTAMPTZ DEFAULT NOW()\n);\n\n-- ============================================================\n-- USERS\n-- ============================================================\nCREATE TABLE users (\n    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,\n    email VARCHAR(255) NOT NULL,\n    full_name VARCHAR(255),\n    cognito_sub VARCHAR(255) UNIQUE,          -- Links to Cognito user\n    role VARCHAR(20) NOT NULL DEFAULT 'viewer', -- admin, editor, viewer\n    is_active BOOLEAN DEFAULT TRUE,\n    created_at TIMESTAMPTZ DEFAULT NOW(),\n    updated_at TIMESTAMPTZ DEFAULT NOW(),\n    UNIQUE(tenant_id, email)\n);\n\nCREATE INDEX idx_users_tenant ON users(tenant_id);\nCREATE INDEX idx_users_cognito ON users(cognito_sub);\n\n-- ============================================================\n-- DOCUMENTS\n-- ============================================================\nCREATE TABLE documents (\n    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,\n    uploaded_by UUID NOT NULL REFERENCES users(id),\n    title VARCHAR(500) NOT NULL,\n    file_name VARCHAR(500) NOT NULL,\n    file_type VARCHAR(20) NOT NULL,           -- pdf, docx\n    file_size_bytes BIGINT,\n    s3_key VARCHAR(1000) NOT NULL,\n    status VARCHAR(30) DEFAULT 'uploaded',    -- uploaded, processing, ready, failed\n    processing_error TEXT,\n    extracted_text TEXT,                       -- full extracted text (for reference)\n    summary TEXT,                             -- AI-generated summary\n    page_count INT,\n    metadata JSONB DEFAULT '{}',\n    created_at TIMESTAMPTZ DEFAULT NOW(),\n    updated_at TIMESTAMPTZ DEFAULT NOW()\n);\n\nCREATE INDEX idx_documents_tenant ON documents(tenant_id);\nCREATE INDEX idx_documents_status ON documents(tenant_id, status);\nCREATE INDEX idx_documents_uploaded_by ON documents(uploaded_by);\n\n-- ============================================================\n-- DOCUMENT CHUNKS (for RAG)\n-- ============================================================\nCREATE TABLE document_chunks (\n    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,\n    document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,\n    chunk_index INT NOT NULL,\n    content TEXT NOT NULL,\n    token_count INT,\n    embedding vector(1536),                   -- OpenAI ada-002 / text-embedding-3-small\n    metadata JSONB DEFAULT '{}',              -- page_number, section, etc.\n    created_at TIMESTAMPTZ DEFAULT NOW()\n);\n\nCREATE INDEX idx_chunks_document ON document_chunks(document_id);\nCREATE INDEX idx_chunks_tenant ON document_chunks(tenant_id);\n\n-- HNSW index for vector similarity search (per-tenant filtering)\nCREATE INDEX idx_chunks_embedding ON document_chunks\n    USING hnsw (embedding vector_cosine_ops)\n    WITH (m = 16, ef_construction = 64);\n\n-- ============================================================\n-- CONVERSATIONS (Q&A sessions)\n-- ============================================================\nCREATE TABLE conversations (\n    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,\n    user_id UUID NOT NULL REFERENCES users(id),\n    title VARCHAR(500),\n    document_ids UUID[] DEFAULT '{}',         -- scoped to specific documents (optional)\n    created_at TIMESTAMPTZ DEFAULT NOW(),\n    updated_at TIMESTAMPTZ DEFAULT NOW()\n);\n\nCREATE INDEX idx_conversations_tenant_user ON conversations(tenant_id, user_id);\n\nCREATE TABLE messages (\n    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,\n    conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,\n    role VARCHAR(20) NOT NULL,                -- user, assistant\n    content TEXT NOT NULL,\n    source_chunks UUID[] DEFAULT '{}',        -- references to document_chunks used\n    token_usage JSONB DEFAULT '{}',           -- prompt_tokens, completion_tokens\n    created_at TIMESTAMPTZ DEFAULT NOW()\n);\n\nCREATE INDEX idx_messages_conversation ON messages(conversation_id);\nCREATE INDEX idx_messages_tenant ON messages(tenant_id);\n\n-- ============================================================\n-- AUDIT LOG\n-- ============================================================\nCREATE TABLE audit_logs (\n    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,\n    user_id UUID REFERENCES users(id),\n    action VARCHAR(100) NOT NULL,             -- document.upload, document.delete, user.invite, etc.\n    resource_type VARCHAR(50),\n    resource_id UUID,\n    details JSONB DEFAULT '{}',\n    ip_address INET,\n    created_at TIMESTAMPTZ DEFAULT NOW()\n);\n\nCREATE INDEX idx_audit_tenant_time ON audit_logs(tenant_id, created_at DESC);\n\n-- ============================================================\n-- ROW-LEVEL SECURITY\n-- ============================================================\nALTER TABLE documents ENABLE ROW LEVEL SECURITY;\nALTER TABLE document_chunks ENABLE ROW LEVEL SECURITY;\nALTER TABLE conversations ENABLE ROW LEVEL SECURITY;\nALTER TABLE messages ENABLE ROW LEVEL SECURITY;\nALTER TABLE users ENABLE ROW LEVEL SECURITY;\nALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;\n\n-- Example RLS policy (applied via SET app.current_tenant_id per request)\nCREATE POLICY tenant_isolation_documents ON documents\n    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);\n\nCREATE POLICY tenant_isolation_chunks ON document_chunks\n    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);\n\nCREATE POLICY tenant_isolation_users ON users\n    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);\n\nCREATE POLICY tenant_isolation_conversations ON conversations\n    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);\n\nCREATE POLICY tenant_isolation_messages ON messages\n    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);\n\nCREATE POLICY tenant_isolation_audit ON audit_logs\n    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);\n```\n\n<!-- RESOLVED (Worker 3): Added tenant_id directly to messages table as recommended\n     in the previous NOTE. This enables direct RLS without subquery joins,\n     which is critical for performance at scale. Also added idx_messages_tenant index. -->\n\n### 2.2 S3 Bucket Structure\n\n```\ns3://docai-saas-documents/\n  \u2514\u2500\u2500 tenants/\n      \u2514\u2500\u2500 {tenant_id}/\n          \u2514\u2500\u2500 documents/\n              \u2514\u2500\u2500 {document_id}/\n                  \u251c\u2500\u2500 original/          # Original uploaded file\n                  \u2502   \u2514\u2500\u2500 filename.pdf\n                  \u2514\u2500\u2500 processed/         # Extracted artifacts\n                      \u2514\u2500\u2500 text.json\n```\n\nS3 bucket policy enforces tenant isolation via IAM + presigned URLs only.\n\n### 2.3 Data Model Notes & Considerations\n\n**Scale Estimates for pgvector:**\n- 10,000 documents per tenant \u00d7 ~50 chunks per document = ~500,000 chunks per tenant\n- 100 tenants \u00d7 500,000 = ~50 million total chunks\n- Each vector (1536 dims, float32) \u2248 6KB \u2192 ~300GB vector data at full scale\n- **NOTE**: At this scale, consider partitioning `document_chunks` by `tenant_id` (range or list partitioning) to keep HNSW index sizes manageable. A single HNSW index over 50M vectors will be slow; partitioned indexes per tenant or tenant group will perform much better.\n\n### 2.4 Partitioning Strategy for document_chunks\n\nAt full scale (50M vectors), a single HNSW index becomes impractical. Use PostgreSQL declarative partitioning:\n\n```sql\n-- Replace the document_chunks table with a partitioned version at scale\n-- Phase 1 (MVP): Use single table (sufficient for early tenants)\n-- Phase 2 (full product): Migrate to list partitioning by tenant_id\n\n-- Example partitioned table structure:\nCREATE TABLE document_chunks (\n    id UUID NOT NULL DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,\n    document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,\n    chunk_index INT NOT NULL,\n    content TEXT NOT NULL,\n    token_count INT,\n    embedding vector(1536),\n    metadata JSONB DEFAULT '{}',\n    created_at TIMESTAMPTZ DEFAULT NOW(),\n    PRIMARY KEY (id, tenant_id)\n) PARTITION BY HASH (tenant_id);\n\n-- Create 16 hash partitions (each handles ~6 tenants, ~3M vectors)\nCREATE TABLE document_chunks_p0 PARTITION OF document_chunks\n    FOR VALUES WITH (MODULUS 16, REMAINDER 0);\nCREATE TABLE document_chunks_p1 PARTITION OF document_chunks\n    FOR VALUES WITH (MODULUS 16, REMAINDER 1);\n-- ... repeat for p2 through p15\n\n-- Each partition gets its own HNSW index (~3M vectors each, very manageable)\nCREATE INDEX idx_chunks_embedding_p0 ON document_chunks_p0\n    USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);\n-- ... repeat per partition\n```\n\n**Migration path**: Start with a single table for MVP. Add partitioning via `pg_partman` or a manual migration when approaching 5M+ chunks. The application code doesn't change \u2014 PostgreSQL routes queries to the correct partition automatically.\n\n---\n\n## 3. API Design\n\n### 3.1 Authentication & Tenant Context\n\nEvery request carries:\n- **JWT token** (from Cognito) \u2192 identifies user\n- **Tenant context** \u2192 derived from user's `tenant_id` in DB (not from client)\n\nMiddleware flow:\n1. Validate JWT \u2192 extract `cognito_sub`\n2. Look up user \u2192 get `tenant_id`, `role`\n3. Set PostgreSQL session variable: `SET app.current_tenant_id = '{tenant_id}'`\n4. RLS automatically filters all queries\n\n### 3.2 API Endpoints\n\n```\nBASE: /api/v1\n\n# Auth\nPOST   /auth/signup                  # Create tenant + admin user\nPOST   /auth/login                   # Cognito login\nPOST   /auth/refresh                 # Refresh token\nPOST   /auth/forgot-password         # Password reset\n\n# Tenant Management (admin only)\nGET    /tenant                       # Get current tenant info\nPUT    /tenant                       # Update tenant settings\nGET    /tenant/usage                 # Usage stats\n\n# User Management (admin only)\nGET    /users                        # List users in tenant\nPOST   /users/invite                 # Invite user (sends email)\nPUT    /users/{id}/role              # Change role\nDELETE /users/{id}                   # Deactivate user\n\n# Documents (editor, admin)\nPOST   /documents/upload             # Upload document (multipart)\nGET    /documents                    # List documents (paginated, filterable)\nGET    /documents/{id}               # Get document details + status\nGET    /documents/{id}/text          # Get extracted text\nGET    /documents/{id}/summary       # Get/generate summary\nDELETE /documents/{id}               # Delete document (admin/owner)\nPOST   /documents/bulk-upload        # Upload multiple documents\n\n# Q&A / RAG (all authenticated users)\nPOST   /",
+  "agent_stats": {
+    "worker_0": {
+      "role": "specialist",
+      "tokens_in": 8882,
+      "tokens_out": 12288,
+      "messages_sent": 9,
+      "messages_received": 0
+    },
+    "worker_1": {
+      "role": "specialist",
+      "tokens_in": 12777,
+      "tokens_out": 12288,
+      "messages_sent": 9,
+      "messages_received": 0
+    },
+    "worker_2": {
+      "role": "specialist",
+      "tokens_in": 12777,
+      "tokens_out": 12288,
+      "messages_sent": 9,
+      "messages_received": 0
+    },
+    "worker_3": {
+      "role": "specialist",
+      "tokens_in": 12777,
+      "tokens_out": 12288,
+      "messages_sent": 9,
+      "messages_received": 0
+    }
+  },
+  "metadata": {
+    "total_revisions": 12,
+    "llm_stats": {
+      "model": "claude-opus-4-6",
+      "total_calls": 12,
+      "total_tokens_in": 47213,
+      "total_tokens_out": 49152,
+      "total_tokens": 96365,
+      "total_latency_ms": 521935.14943122864,
+      "avg_latency_ms": 43494.59578593572
+    }
+  },
+  "messages": [
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_0",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_0",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_0",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 1",
+      "token_count": 4460
+    },
+    {
+      "sender": "worker_1",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_1",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_1",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 2",
+      "token_count": 8355
+    },
+    {
+      "sender": "worker_2",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_2",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_2",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 3",
+      "token_count": 8355
+    },
+    {
+      "sender": "worker_3",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_3",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_3",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 4",
+      "token_count": 8355
+    },
+    {
+      "sender": "worker_0",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_0",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_0",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 5",
+      "token_count": 8355
+    },
+    {
+      "sender": "worker_1",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_1",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_1",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 6",
+      "token_count": 8355
+    },
+    {
+      "sender": "worker_2",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_2",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_2",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 7",
+      "token_count": 8355
+    },
+    {
+      "sender": "worker_3",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_3",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_3",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 8",
+      "token_count": 8355
+    },
+    {
+      "sender": "worker_0",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_0",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_0",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 9",
+      "token_count": 8355
+    },
+    {
+      "sender": "worker_1",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_1",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_1",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 10",
+      "token_count": 8355
+    },
+    {
+      "sender": "worker_2",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_2",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_2",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 11",
+      "token_count": 8355
+    },
+    {
+      "sender": "worker_3",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated document",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_3",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated revision",
+      "token_count": 0
+    },
+    {
+      "sender": "worker_3",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Revision 12",
+      "token_count": 8355
+    }
+  ]
+}

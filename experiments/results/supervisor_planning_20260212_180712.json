@@ -1,0 +1,126 @@
+{
+  "experiment_id": "c62ec2d8",
+  "pattern": "supervisor",
+  "benchmark": "planning",
+  "model": "claude-opus-4-6",
+  "num_agents": 4,
+  "num_rounds": 5,
+  "total_tokens": 118013,
+  "wall_time_seconds": 456.0731017589569,
+  "quality_score": 72.0,
+  "token_efficiency": 0.6101022768678027,
+  "final_output": "{\"action\": \"synthesize\", \"final_output\": \"# Multi-Tenant SaaS RAG Application: Complete Technical Architecture\\n\\n## Executive Summary\\n\\nThis document presents a comprehensive technical architecture for a production-grade, multi-tenant SaaS application with Retrieval-Augmented Generation (RAG) capabilities. The system is designed for **100 tenants, 1,000 users, 10,000 documents per tenant (~1M total documents)**, with a target of **5,000 queries/day**. The architecture prioritizes operational simplicity, cost efficiency, strong tenant isolation, and a clear evolutionary path as scale increases.\\n\\n---\\n\\n## 1. Multi-Tenancy Strategy\\n\\n### Decision: Row-Level Isolation with PostgreSQL RLS + Logical Partitioning\\n\\n**Why not alternatives?**\\n\\n| Criterion | Row-Level (tenant_id) | Schema-per-Tenant | Database-per-Tenant |\\n|---|---|---|---|\\n| Data Isolation | Logical (RLS policies) | Strong (schema boundary) | Strongest (full DB boundary) |\\n| Cross-tenant risk | Highest (mitigated by RLS) | Medium | Lowest |\\n| Connection pooling | Single pool, efficient | 100 schemas, moderate | 100 DBs, connection explosion |\\n| Migration complexity | Single migration | 100 schema migrations | 100 DB migrations |\\n| Operational overhead | Low | Medium | Very High |\\n| Cost (RDS) | 1 instance | 1 instance | 100 instances (prohibitive) |\\n| Compliance (data residency) | Difficult | Difficult | Easy (regional DBs) |\\n\\nAt 100 tenants with 1M total documents, database-per-tenant is operationally prohibitive and cost-excessive. Schema-per-tenant adds migration complexity without proportional benefit. Row-level isolation with PostgreSQL's **Row-Level Security (RLS)** provides the right balance.\\n\\n### Implementation\\n\\n```sql\\n-- Core RLS implementation\\nALTER TABLE documents ENABLE ROW LEVEL SECURITY;\\n\\nCREATE POLICY tenant_isolation_policy ON documents\\n    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);\\n\\n-- Set per-request in application middleware\\nSET app.current_tenant_id = 'tenant-uuid-here';\\n```\\n\\n### Defense-in-Depth Layers\\n1. **Application middleware** \u2014 injects `tenant_id` on every request\\n2. **PostgreSQL RLS** \u2014 database-enforced isolation, cannot be bypassed by application bugs\\n3. **API-level validation** \u2014 JWT claims carry `tenant_id`, verified against resource ownership\\n4. **Audit logging** \u2014 all cross-tenant access attempts logged\\n\\nIf a tenant later requires physical isolation (compliance), they can be extracted to a dedicated schema/DB without rearchitecting.\\n\\n---\\n\\n## 2. RAG Pipeline Architecture\\n\\n### High-Level Flow\\n\\n```\\nINGESTION:  S3 Upload \u2192 SQS Queue \u2192 ECS Worker \u2192 Parse \u2192 Chunk \u2192 Embed \u2192 PostgreSQL + pgvector\\nRETRIEVAL:  Query \u2192 Embed \u2192 Vector Search (tenant-filtered) \u2192 Rerank \u2192 LLM \u2192 Answer\\n```\\n\\n### 2.1 Document Parsing\\n\\n**Decision: `unstructured` library as primary parser**\\n\\n| Library | PDF Quality | Tables | OCR | Speed | Verdict |\\n|---|---|---|---|---|---|\\n| pdfplumber | Excellent | Good | No | Medium | Good for text PDFs |\\n| PyPDF2/pypdf | Basic | Poor | No | Fast | Fallback only |\\n| **unstructured.io** | Excellent | Excellent | Yes | Slow | \u2705 Primary |\\n| Apache Tika | Good | Good | Yes | Medium | Over-engineered |\\n\\n**Rationale:** `unstructured` provides format-agnostic parsing (PDF, DOCX, PPTX, HTML, MD, TXT) with element-type awareness (titles, paragraphs, tables, lists). This structural metadata dramatically improves chunking quality. It handles DOCX natively and supports OCR fallback for scanned PDFs via Tesseract.\\n\\n```python\\nfrom unstructured.partition.auto import partition\\nelements = partition(filename=\\\"document.pdf\\\", strategy=\\\"hi_res\\\")\\n# Returns structured elements: Title, NarrativeText, Table, ListItem, etc.\\n```\\n\\n### 2.2 Text Chunking Strategy\\n\\nThis is the **single most impactful decision** for RAG quality.\\n\\n**Recommended: Hierarchical structure-aware chunking with metadata**\\n\\n```python\\nfrom unstructured.chunking.title import chunk_by_title\\n\\nchunks = chunk_by_title(\\n    elements,\\n    max_characters=1000,\\n    new_after_n_chars=800,\\n    combine_text_under_n_chars=200,\\n    overlap=100,\\n)\\n```\\n\\n**Chunk size rationale (1000 chars / ~200 tokens):**\\n- Small enough for precise retrieval (vs. 2000+ which dilutes relevance)\\n- Large enough to contain a complete thought\\n- 200-char overlap prevents context loss at boundaries\\n- Fits well within context windows when retrieving 5\u201310 chunks\\n\\nEach chunk carries rich metadata for filtering and context:\\n```python\\nchunk_record = {\\n    \\\"text\\\": \\\"chunk text content...\\\",\\n    \\\"metadata\\\": {\\n        \\\"tenant_id\\\": \\\"uuid\\\",\\n        \\\"document_id\\\": \\\"uuid\\\",\\n        \\\"chunk_index\\\": 5,\\n        \\\"total_chunks\\\": 42,\\n        \\\"source_page\\\": 3,\\n        \\\"section_title\\\": \\\"Revenue Analysis\\\",\\n        \\\"element_type\\\": \\\"NarrativeText\\\",\\n        \\\"parent_chunk_id\\\": \\\"uuid\\\",\\n    }\\n}\\n```\\n\\nFallback strategies include `RecursiveCharacterTextSplitter` (for unstructured text) and `SemanticChunker` (for high-value documents where embedding-based boundary detection is worth the cost).\\n\\n### 2.3 Embedding Generation\\n\\n**Decision: OpenAI `text-embedding-3-small` (1536d) for launch, with migration path to self-hosted**\\n\\n| Model | Dimensions | Quality (MTEB) | Cost | Self-hostable |\\n|---|---|---|---|---|\\n| **OpenAI text-embedding-3-small** | 1536 | Very Good | $0.02/1M tokens | No |\\n| OpenAI text-embedding-3-large | 3072 | Excellent | $0.13/1M tokens | No |\\n| Cohere embed-v3 | 1024 | Excellent | $0.10/1M tokens | No |\\n| BAAI/bge-large-en-v1.5 | 1024 | Excellent | Free | Yes |\\n\\n**Rationale:**\\n- At 10M chunks: initial embedding cost \u2248 $4\u20138 (one-time), trivial\\n- Ongoing query embedding cost is negligible (~$0.02/1M tokens)\\n- Superior quality vs. self-hosted at this team size (no GPU infrastructure needed)\\n- Supports **dimension reduction** via API parameter (can use 512d for cost/speed)\\n- Migration path: store model identifier with embeddings; re-embed in batches if switching models\\n\\n```python\\ndef generate_embeddings(texts: list[str], model=\\\"text-embedding-3-small\\\"):\\n    response = client.embeddings.create(input=texts, model=model, dimensions=1536)\\n    return [item.embedding for item in response.data]\\n```\\n\\n---\\n\\n## 3. Vector Storage\\n\\n### Decision: pgvector (Primary) with Migration Path to Qdrant\\n\\n| Criteria | **pgvector** | Qdrant | Weaviate | Milvus | ChromaDB |\\n|---|---|---|---|---|---|\\n| Deployment | Extension on existing PG | Separate service | Separate service | Separate cluster | Embedded |\\n| Max Vectors (practical) | ~50M with partitioning | 100M+ | 100M+ | Billions | ~1M |\\n| Filtering | Full SQL WHERE | Payload filtering | GraphQL-style | Boolean expressions | Basic |\\n| Hybrid Search | `tsvector` + `pgvector` in same query | Sparse vectors | Built-in BM25 | Sparse vectors | Not supported |\\n| Consistency | ACID (strong) | Eventual | Eventual | Eventual | None |\\n| Transactional Joins | Full SQL joins | Requires separate DB | Requires separate DB | Requires separate DB | Requires separate DB |\\n| Operational Overhead | Zero (same DB) | Medium | Medium-High | High | Low |\\n| Latency (p99, 1M vectors) | 8\u201315ms (HNSW) | 5\u201310ms | 8\u201312ms | 5\u20138ms | 20\u201350ms |\\n\\n**Rationale:**\\n1. **Zero additional infrastructure** \u2014 same backup, monitoring, failover, and connection pooling\\n2. **Transactional consistency** \u2014 document chunks, embeddings, and metadata are ACID-consistent; no orphan cleanup\\n3. **Native multi-tenancy** \u2014 tenant isolation via `tenant_id` with RLS and partition pruning\\n4. **Hybrid search** \u2014 combine `tsvector` full-text search with vector similarity in a single SQL query\\n5. **Cost** \u2014 at 5\u201320M vectors, pgvector on `db.r6g.2xlarge` (~$550/mo) is sufficient\\n\\n### Schema Design\\n\\n```sql\\nCREATE EXTENSION IF NOT EXISTS vector;\\n\\nCREATE TABLE document_chunks (\\n    id              UUID DEFAULT gen_random_uuid(),\\n    tenant_id       UUID NOT NULL,\\n    document_id     UUID NOT NULL,\\n    chunk_index     INTEGER NOT NULL,\\n    content         TEXT NOT NULL,\\n    content_tokens  INTEGER NOT NULL,\\n    content_tsv     tsvector GENERATED ALWAYS AS (to_tsvector('english', content)) STORED,\\n    embedding       vector(1536) NOT NULL,\\n    metadata        JSONB NOT NULL DEFAULT '{}',\\n    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),\\n    PRIMARY KEY (tenant_id, id)\\n) PARTITION BY HASH (tenant_id);\\n\\n-- 16 hash partitions (distributes ~100 tenants evenly)\\nDO $$\\nBEGIN\\n    FOR i IN 0..15 LOOP\\n        EXECUTE format(\\n            'CREATE TABLE document_chunks_p%s PARTITION OF document_chunks\\n             FOR VALUES WITH (MODULUS 16, REMAINDER %s)', i, i\\n        );\\n    END LOOP;\\nEND $$;\\n```\\n\\n### HNSW Index Configuration\\n\\n```sql\\nCREATE INDEX CONCURRENTLY idx_chunks_embedding_hnsw ON document_chunks\\n    USING hnsw (embedding vector_cosine_ops)\\n    WITH (m = 24, ef_construction = 256);\\n\\nCREATE INDEX CONCURRENTLY idx_chunks_content_tsv ON document_chunks USING GIN (content_tsv);\\nCREATE INDEX CONCURRENTLY idx_chunks_document ON document_chunks (tenant_id, document_id);\\n\\nSET hnsw.ef_search = 100;  -- tuned for better recall at <5ms additional cost\\n```\\n\\n### Partitioning Strategy\\n\\n| Scale | Strategy | Rationale |\\n|---|---|---|\\n| < 5M vectors | Single table + index | Simple, fast |\\n| **5M \u2013 50M vectors** | **HASH(tenant_id) \u00d7 16** | **Even distribution (current scale)** |\\n| 50M \u2013 200M vectors | LIST(tenant_id) for large tenants + HASH | Per-tenant index tuning |\\n| > 200M vectors | Migrate to Qdrant/Milvus | Purpose-built ANN |\\n\\n### Query Patterns\\n\\n**Pure vector search:**\\n```sql\\nSELECT dc.id, dc.content, dc.metadata,\\n       1 - (dc.embedding <=> $1::vector) AS similarity\\nFROM document_chunks dc\\nWHERE dc.tenant_id = $2\\n  AND 1 - (dc.embedding <=> $1::vector) > 0.7\\nORDER BY dc.embedding <=> $1::vector\\nLIMIT 10;\\n```\\n\\n**Hybrid search (BM25 + vector) with Reciprocal Rank Fusion:**\\n```sql\\nWITH vector_results AS (\\n    SELECT id, content, metadata, document_id,\\n           ROW_NUMBER() OVER (ORDER BY embedding <=> $1::vector) AS vector_rank\\n    FROM document_chunks\\n    WHERE tenant_id = $2\\n    ORDER BY embedding <=> $1::vector\\n    LIMIT 20\\n),\\ntext_results AS (\\n    SELECT id, content, metadata, document_id,\\n           ROW_NUMBER() OVER (ORDER BY ts_rank_cd(content_tsv, query) DESC) AS text_rank\\n    FROM document_chunks, plainto_tsquery('english', $3) query\\n    WHERE tenant_id = $2 AND content_tsv @@ query\\n    ORDER BY ts_rank_cd(content_tsv, query) DESC\\n    LIMIT 20\\n),\\nfused AS (\\n    SELECT COALESCE(v.id, t.id) AS id,\\n           COALESCE(v.content, t.content) AS content,\\n           COALESCE(1.0/(60 + v.vector_rank), 0) + COALESCE(1.0/(60 + t.text_rank), 0) AS rrf_score\\n    FROM vector_results v\\n    FULL OUTER JOIN text_results t ON v.id = t.id\\n)\\nSELECT * FROM fused ORDER BY rrf_score DESC LIMIT $4;\\n```\\n\\n---\\n\\n## 4. LLM Selection & Routing\\n\\n### Cost Model (5,000 queries/day = 150,000/month)\\n\\n| Model | Monthly Cost | Quality (RAG tasks) |\\n|---|---|---|\\n| **GPT-4o-mini** | **~$156** | 8/10 |\\n| Claude 3.5 Sonnet | ~$3,420 | 9.5/10 |\\n| GPT-4o | ~$4,725 | 9.5/10 |\\n| Llama 3 70B (self-hosted) | ~$4,600\u2013$6,139 | 7/10 |\\n\\n### Recommended: Tiered LLM Routing\\n\\nAn intelligent router selects the optimal model based on query complexity, tenant tier, and budget:\\n\\n```python\\nclass LLMRouter:\\n    def route(self, query: str, context: dict) -> RoutingDecision:\\n        complexity = self._assess_complexity(query, context)\\n        tier = context.get(\\\"tenant_tier\\\", \\\"standard\\\")\\n        budget_remaining = await self._get_budget_remaining(context[\\\"tenant_id\\\"])\\n        model = self._select_model(complexity, budget_remaining, tier)\\n        return RoutingDecision(model=model, ...)\\n```\\n\\n**Complexity Assessment** uses weighted heuristics (signal words, query length, chunk count, conversation depth, structured output requests) to produce a 0.0\u20131.0 score.\\n\\n**Routing Rules:**\\n- Simple factual Q&A (complexity < 0.3) \u2192 **GPT-4o-mini** (cost: $0.15/1M input tokens)\\n- Multi-document synthesis (0.3\u20130.6) \u2192 **GPT-4o** ($5.00/1M input tokens)\\n- Long-context analysis (> 0.6)",
+  "agent_stats": {
+    "supervisor": {
+      "role": "coordinator",
+      "tokens_in": 92074,
+      "tokens_out": 8562,
+      "messages_sent": 5,
+      "messages_received": 5
+    },
+    "analyst": {
+      "role": "specialist",
+      "tokens_in": 2018,
+      "tokens_out": 15359,
+      "messages_sent": 5,
+      "messages_received": 5
+    },
+    "writer": {
+      "role": "specialist",
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "messages_sent": 0,
+      "messages_received": 0
+    },
+    "reviewer": {
+      "role": "specialist",
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "messages_sent": 0,
+      "messages_received": 0
+    }
+  },
+  "metadata": {
+    "llm_stats": {
+      "model": "claude-opus-4-6",
+      "total_calls": 11,
+      "total_tokens_in": 94092,
+      "total_tokens_out": 23921,
+      "total_tokens": 118013,
+      "total_latency_ms": 456068.57800483704,
+      "avg_latency_ms": 41460.77981862155
+    }
+  },
+  "messages": [
+    {
+      "sender": "supervisor",
+      "receiver": "analyst",
+      "performative": "request",
+      "content": "Analyze the technical architecture for this multi-tenant SaaS application. Specifically address:\n\n1. **Multi-tenancy strategy**: Compare row-level isolation (tenant_id column) vs schema-per-tenant vs database-per-tenant for PostgreSQL given 100 tenants, 1000 users, 10K docs/tenant. Recommend the best approach with justification.\n\n2. **RAG pipeline architecture**: Design the document processing pipeline - ingestion (PDF/DOCX parsing), text chunking strategy, embedding generation, vector storage, ",
+      "token_count": 0
+    },
+    {
+      "sender": "analyst",
+      "receiver": "supervisor",
+      "performative": "inform",
+      "content": "\n\n# Multi-Tenant SaaS RAG Application: Deep Technical Architecture Analysis\n\n---\n\n## 1. Multi-Tenancy Strategy Analysis\n\n### Comparative Analysis for PostgreSQL\n\nGiven the parameters: **100 tenants, 1,000 users, 10K docs/tenant, 1M total documents**\n\n| Criterion | Row-Level (tenant_id) | Schema-per-Tenant | Database-per-Tenant |\n|---|---|---|---|\n| **Data Isolation** | Logical (RLS policies) | Strong (schema boundary) | Strongest (full DB boundary) |\n| **Cross-tenant risk** | Highest (query bugs",
+      "token_count": 3490
+    },
+    {
+      "sender": "supervisor",
+      "receiver": "analyst",
+      "performative": "request",
+      "content": "Continue the deep technical analysis from where it was cut off. Complete the following remaining sections:\n\n1. **Vector Storage comparison** - finish the table (Qdrant, Weaviate, Milvus, ChromaDB) and finalize the pgvector recommendation with implementation details including HNSW index configuration, partitioning strategy for 20M vectors, and query patterns.\n\n2. **LLM Selection for RAG** - Compare GPT-4o-mini vs GPT-4o vs Claude 3.5 Sonnet vs self-hosted (Llama 3) for summarization and Q&A. Incl",
+      "token_count": 0
+    },
+    {
+      "sender": "analyst",
+      "receiver": "supervisor",
+      "performative": "inform",
+      "content": "\n\n# Deep Technical Analysis \u2014 Continued\n\n---\n\n## 1. Vector Storage Comparison\n\n### Full Comparison Matrix\n\n| Criteria | **pgvector** | **Qdrant** | **Weaviate** | **Milvus** | **ChromaDB** |\n|---|---|---|---|---|---|\n| **Deployment** | Extension on existing PG | Separate service (Rust) | Separate service (Go) | Separate cluster (Go/C++) | Embedded / lightweight |\n| **Max Vectors (practical)** | ~50M with partitioning | 100M+ | 100M+ | Billions (distributed) | ~1M (not production-grade) |\n| **Ind",
+      "token_count": 3489
+    },
+    {
+      "sender": "supervisor",
+      "receiver": "analyst",
+      "performative": "request",
+      "content": "Continue completing the remaining technical analysis sections. Pick up from where the previous output was cut off. Complete:\n\n1. **LLM Selection for RAG** - Compare GPT-4o-mini vs GPT-4o vs Claude 3.5 Sonnet vs self-hosted (Llama 3) for summarization and Q&A. Include cost modeling at scale (5000 queries/day). Recommend a tiered approach (MVP vs production).\n\n2. **Retrieval Strategy** - Detail naive top-k vs MMR vs hybrid search (BM25 + vector) vs HyDE. Include Python implementation of MMR algori",
+      "token_count": 0
+    },
+    {
+      "sender": "analyst",
+      "receiver": "supervisor",
+      "performative": "inform",
+      "content": "\n\n# Technical Analysis: Deep Dive Continuation\n\n## 1. LLM Selection for RAG\n\n### 1.1 Model Comparison Matrix\n\n| Dimension | GPT-4o-mini | GPT-4o | Claude 3.5 Sonnet | Llama 3 70B (Self-hosted) |\n|---|---|---|---|---|\n| **Input Cost (per 1M tokens)** | $0.15 | $5.00 | $3.00 | ~$0.00 (infra only) |\n| **Output Cost (per 1M tokens)** | $0.60 | $15.00 | $15.00 | ~$0.00 (infra only) |\n| **Context Window** | 128K | 128K | 200K | 128K |\n| **Output Quality (Summarization)** | 7.5/10 | 9.5/10 | 9.5/10 | 7",
+      "token_count": 3405
+    },
+    {
+      "sender": "supervisor",
+      "receiver": "analyst",
+      "performative": "request",
+      "content": "Complete the remaining sections that were cut off. Continue from the LLM Router code and provide:\n\n1. **Complete the LLM Router** - Finish the _assess_complexity method and remaining helper methods briefly, then move on.\n\n2. **Retrieval Strategy** - Compare naive top-k, MMR, hybrid search (BM25+vector), and HyDE. Include a Python MMR implementation. Recommend MVP vs full product approach.\n\n3. **Caching Strategy** - Redis caching layers with TTL strategies and invalidation patterns for: query emb",
+      "token_count": 0
+    },
+    {
+      "sender": "analyst",
+      "receiver": "supervisor",
+      "performative": "inform",
+      "content": "\n\n# Complete System Design \u2014 Remaining Sections\n\n## 1. LLM Router (Completed)\n\n```python\nclass LLMRouter:\n    \"\"\"Routes queries to appropriate LLM based on complexity, cost, and latency requirements.\"\"\"\n\n    MODELS = {\n        \"gpt-4o-mini\": {\"cost_per_1k\": 0.00015, \"avg_latency_ms\": 400, \"quality\": 0.7, \"context_window\": 128000},\n        \"gpt-4o\": {\"cost_per_1k\": 0.005, \"avg_latency_ms\": 800, \"quality\": 0.9, \"context_window\": 128000},\n        \"gpt-4-turbo\": {\"cost_per_1k\": 0.01, \"avg_latency_ms",
+      "token_count": 3377
+    },
+    {
+      "sender": "supervisor",
+      "receiver": "analyst",
+      "performative": "request",
+      "content": "Complete the remaining sections. Continue from where the MMR implementation was cut off. Provide ALL of the following sections completely:\n\n1. **Complete MMR Implementation** - Finish the mmr_select function (the iterative selection loop).\n\n2. **Recommended Retrieval Strategy for MVP vs Full Product**:\n   - MVP: Top-K vector search with tenant filtering\n   - V1.1: Add hybrid BM25+vector with RRF\n   - V2: Add MMR for diversity + optional reranking\n   - V3: Add HyDE for complex queries\n\n3. **Cachi",
+      "token_count": 0
+    },
+    {
+      "sender": "analyst",
+      "receiver": "supervisor",
+      "performative": "inform",
+      "content": "\n\n# Complete Technical Design Document \u2014 Remaining Sections\n\n---\n\n## 1. Complete MMR Implementation\n\n```python\nimport numpy as np\nfrom typing import List, Tuple\n\ndef cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:\n    \"\"\"Compute cosine similarity between two vectors.\"\"\"\n    norm_a = np.linalg.norm(a)\n    norm_b = np.linalg.norm(b)\n    if norm_a == 0 or norm_b == 0:\n        return 0.0\n    return float(np.dot(a, b) / (norm_a * norm_b))\n\n\ndef mmr_select(\n    query_embedding: np.ndarray,\n ",
+      "token_count": 3616
+    }
+  ]
+}

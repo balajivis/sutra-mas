@@ -1,0 +1,55 @@
+{
+  "experiment_id": "2a693de9",
+  "pattern": "supervisor",
+  "benchmark": "code_review",
+  "model": "claude-opus-4-6",
+  "num_agents": 4,
+  "num_rounds": 1,
+  "total_tokens": 1682,
+  "wall_time_seconds": 23.86950421333313,
+  "quality_score": 22.0,
+  "token_efficiency": 13.079667063020214,
+  "final_output": "\n\n{\"action\": \"delegate\", \"specialist\": \"analyst\", \"instruction\": \"Perform a thorough security analysis of this Flask/Python web application code. Identify every security vulnerability, categorize them by severity (critical, high, medium, low), and explain the attack vectors for each. Look specifically for: SQL injection, XSS, authentication/authorization issues, data exposure, insecure configurations, resource management issues, and any other OWASP Top 10 vulnerabilities.\"}\n\n{\"action\": \"delegate\", \"specialist\": \"reviewer\", \"instruction\": \"Review this Flask/Python code for code quality issues beyond security: resource management (database connections not being closed), error handling gaps, missing input validation, lack of type hints, missing database schema initialization, HTTP method concerns, and any best practice violations. Also verify if the analyst's security findings are complete - check for: SQL injection in all three query locations, XSS in the search endpoint, the unprotected admin endpoint, plaintext password storage, debug mode in production, binding to 0.0.0.0, and missing CSRF protection.\"}\n\n{\"action\": \"delegate\", \"specialist\": \"writer\", \"instruction\": \"Write a comprehensive, well-structured code review report based on these findings. Organize it with: 1) An executive summary with overall risk rating, 2) A findings table organized by severity (Critical/High/Medium/Low), where each finding has: title, location in code, explanation of the vulnerability, attack example where applicable, and a concrete code fix. 3) A final section showing the fully corrected version of the entire file. Use markdown formatting with clear headers, code blocks, and emoji severity indicators (\ud83d\udd34 Critical, \ud83d\udfe0 High, \ud83d\udfe1 Medium, \ud83d\udfe2 Low). Here are the issues to cover:\\n\\nCRITICAL:\\n- SQL Injection in get_user() via f-string interpolation of user_id\\n- SQL Injection in create_user() via f-string interpolation of name, email, password\\n- SQL Injection in search() via f-string interpolation of query parameter\\n- Stored Plaintext Passwords in create_user()\\n- Cross-Site Scripting (XSS) in search() returning raw HTML with unsanitized user data\\n\\nHIGH:\\n- Unprotected admin endpoint /admin/delete_all with no authentication or authorization\\n- Debug mode enabled in production (debug=True) which exposes interactive debugger\\n- Binding to 0.0.0.0 with debug mode (remote code execution via debugger)\\n\\nMEDIUM:\\n- Database connections never closed (resource leak)\\n- No input validation on POST /users (missing fields cause unhandled KeyError 500s)\\n- No CSRF protection on state-changing POST endpoints\\n- Email exposure in search results\\n\\nLOW:\\n- No Content-Type/security headers\\n- No rate limiting\\n- No logging\\n- Missing type hints\\n\\nFor the corrected code, use parameterized queries, bcrypt for passwords, flask.escape or return JSON from search, add auth decorator to admin, use app.teardown_appcontext for DB cleanup, disable debug mode, add input validation, and add basic security headers.\"}\n\n{\"action\": \"synthesize\", \"final_output\": \"# \ud83d\udd12 Code Review Report: Flask User Management API\\n\\n## Executive Summary\\n\\n**Overall Risk Rating: \ud83d\udd34 CRITICAL**\\n\\nThis application contains **multiple critical security vulnerabilities** that make it immediately exploitable in any environment. The most severe issues \u2014 SQL injection in three separate locations, plaintext password storage, and cross-site scripting \u2014 would allow an attacker to read, modify, or destroy the entire database, hijack user sessions, and potentially gain server access. **This code must not be deployed in its current state.**\\n\\n---\\n\\n## Findings by Severity\\n\\n### \ud83d\udd34 Critical\\n\\n#### 1. SQL Injection \u2014 `get_user()` (Line 14)\\n\\n**Location:** `/users/<user_id>` endpoint\\n\\n```python\\n# \u274c Vulnerable\\ncursor = db.execute(f\\\"SELECT * FROM users WHERE id = {user_id}\\\")\\n```\\n\\n**Risk:** An attacker can inject arbitrary SQL via the URL path. Since `user_id` is a raw string from the URL, there is no type checking or",
+  "agent_stats": {
+    "supervisor": {
+      "role": "coordinator",
+      "tokens_in": 658,
+      "tokens_out": 1024,
+      "messages_sent": 0,
+      "messages_received": 0
+    },
+    "analyst": {
+      "role": "specialist",
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "messages_sent": 0,
+      "messages_received": 0
+    },
+    "writer": {
+      "role": "specialist",
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "messages_sent": 0,
+      "messages_received": 0
+    },
+    "reviewer": {
+      "role": "specialist",
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "messages_sent": 0,
+      "messages_received": 0
+    }
+  },
+  "metadata": {
+    "llm_stats": {
+      "model": "claude-opus-4-6",
+      "total_calls": 1,
+      "total_tokens_in": 658,
+      "total_tokens_out": 1024,
+      "total_tokens": 1682,
+      "total_latency_ms": 23869.321823120117,
+      "avg_latency_ms": 23869.321823120117
+    }
+  },
+  "messages": []
+}

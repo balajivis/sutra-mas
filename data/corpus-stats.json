@@ -1,0 +1,292 @@
+{
+    "total_papers": 36013,
+    "by_status": {
+        "archived": 9180,
+        "enriching": 18,
+        "filtering": 6,
+        "marginal": 8825,
+        "planning_reproduction": 5,
+        "relevant": 1,
+        "reproduction_planned": 5,
+        "scouted": 17943,
+        "seed": 30
+    },
+    "by_era": {
+        "classical_pre_2010": 10518,
+        "middle_2010_2022": 7882,
+        "modern_2023_plus": 8117
+    },
+    "by_cluster": [
+        {
+            "cluster_id": 0,
+            "label": "Shared Medium Coordination",
+            "count": 1096
+        },
+        {
+            "cluster_id": 1,
+            "label": "Contract Net and Task Allocation",
+            "count": 945
+        },
+        {
+            "cluster_id": 2,
+            "label": "Organizational Design and Team Structures",
+            "count": 2167
+        },
+        {
+            "cluster_id": 3,
+            "label": "Distributed Planning, Problem Solving, and Teamwork",
+            "count": 1798
+        },
+        {
+            "cluster_id": 4,
+            "label": "Agent Communication Languages and Protocols",
+            "count": 281
+        },
+        {
+            "cluster_id": 5,
+            "label": "Argumentation and Structured Debate",
+            "count": 388
+        },
+        {
+            "cluster_id": 6,
+            "label": "Negotiation, Game Theory, and Economic Paradigms",
+            "count": 1167
+        },
+        {
+            "cluster_id": 7,
+            "label": "BDI and Cognitive Agent Architectures",
+            "count": 1970
+        },
+        {
+            "cluster_id": 8,
+            "label": "Human-Agent Interaction and HITL",
+            "count": 337
+        },
+        {
+            "cluster_id": 9,
+            "label": "Trust, Reputation, and Norms",
+            "count": 658
+        },
+        {
+            "cluster_id": 10,
+            "label": "Multi-Agent Engineering: Methodologies, Frameworks, and Platforms",
+            "count": 2411
+        },
+        {
+            "cluster_id": 11,
+            "label": "Multi-Agent Robotics and Embodied Teams",
+            "count": 929
+        },
+        {
+            "cluster_id": 12,
+            "label": "Evaluation Benchmarks and Failure Analysis",
+            "count": 955
+        },
+        {
+            "cluster_id": 13,
+            "label": "Memory and Context Management",
+            "count": 107
+        },
+        {
+            "cluster_id": 14,
+            "label": "Learning and Adaptation",
+            "count": 2386
+        },
+        {
+            "cluster_id": 15,
+            "label": "Modeling and Simulating Artificial Societies",
+            "count": 374
+        }
+    ],
+    "citation_edges": 18207,
+    "reinvention_edges": 15026,
+    "papers_with_code": 486,
+    "papers_with_analysis": 17971,
+    "top_coordination_patterns": [
+        {
+            "pattern": "none",
+            "count": 6624
+        },
+        {
+            "pattern": "hybrid",
+            "count": 3667
+        },
+        {
+            "pattern": "hierarchical",
+            "count": 3427
+        },
+        {
+            "pattern": "peer",
+            "count": 1155
+        },
+        {
+            "pattern": "supervisor",
+            "count": 727
+        },
+        {
+            "pattern": "auction",
+            "count": 693
+        },
+        {
+            "pattern": "blackboard",
+            "count": 663
+        },
+        {
+            "pattern": "stigmergy",
+            "count": 214
+        },
+        {
+            "pattern": "debate",
+            "count": 213
+        },
+        {
+            "pattern": "contract_net",
+            "count": 188
+        },
+        {
+            "pattern": "generator_critic",
+            "count": 175
+        },
+        {
+            "pattern": "bdi",
+            "count": 173
+        },
+        {
+            "pattern": "market",
+            "count": 9
+        },
+        {
+            "pattern": "negotiation",
+            "count": 3
+        },
+        {
+            "pattern": "market_based",
+            "count": 3
+        },
+        {
+            "pattern": "centralized",
+            "count": 2
+        },
+        {
+            "pattern": "mediated",
+            "count": 2
+        },
+        {
+            "pattern": "market / auction",
+            "count": 2
+        },
+        {
+            "pattern": "marketplace",
+            "count": 2
+        },
+        {
+            "pattern": "market_mechanism",
+            "count": 2
+        },
+        {
+            "pattern": "consensus",
+            "count": 2
+        },
+        {
+            "pattern": "leader_follower",
+            "count": 1
+        },
+        {
+            "pattern": "market-based",
+            "count": 1
+        },
+        {
+            "pattern": "decentralized",
+            "count": 1
+        },
+        {
+            "pattern": "protocol",
+            "count": 1
+        },
+        {
+            "pattern": "protocol / organizational (mapped here as: hierarchical)",
+            "count": 1
+        },
+        {
+            "pattern": "environment_mediated (closest to blackboard/stigmergy: agents coordinate indirectly via hypermedia resources rather than direct messages)",
+            "count": 1
+        },
+        {
+            "pattern": "market-based (hybrid of bilateral and centralized market mechanisms)",
+            "count": 1
+        },
+        {
+            "pattern": "heterarchical",
+            "count": 1
+        },
+        {
+            "pattern": "market/economic (closest to auction/contract_net, but primarily price-mediated, decentralized interaction)",
+            "count": 1
+        },
+        {
+            "pattern": "client-server",
+            "count": 1
+        },
+        {
+            "pattern": "adversarial_hybrid",
+            "count": 1
+        },
+        {
+            "pattern": "game_theoretic (treated as multi-agent game structures with strategies; closest to hierarchical/peer patterns but formally modeled as games)",
+            "count": 1
+        },
+        {
+            "pattern": "coalition",
+            "count": 1
+        },
+        {
+            "pattern": "mediator",
+            "count": 1
+        },
+        {
+            "pattern": "graph",
+            "count": 1
+        },
+        {
+            "pattern": "organizational",
+            "count": 1
+        },
+        {
+            "pattern": "environment_mediated (closest to blackboard/stigmergy, but effectively none between agents in the excerpt)",
+            "count": 1
+        },
+        {
+            "pattern": "adversarial_two_player (closest to: hybrid of hierarchical + generator_critic, but best described as a two-player zero-sum game between attacker and defender)",
+            "count": 1
+        },
+        {
+            "pattern": "vote",
+            "count": 1
+        },
+        {
+            "pattern": "broadcast",
+            "count": 1
+        },
+        {
+            "pattern": "flat",
+            "count": 1
+        },
+        {
+            "pattern": "emergent",
+            "count": 1
+        },
+        {
+            "pattern": "environment_mediated (closest to blackboard, but interactions are primarily via shared simulated environment rather than explicit coordination protocols)",
+            "count": 1
+        },
+        {
+            "pattern": "market/auction",
+            "count": 1
+        },
+        {
+            "pattern": "synchronous",
+            "count": 1
+        }
+    ],
+    "exported_at": "2026-02-15T04:03:03.021247+00:00"
+}

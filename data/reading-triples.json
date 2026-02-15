@@ -1,0 +1,253 @@
+[
+    {
+        "cluster_id": 0,
+        "cluster_label": "Shared Medium Coordination",
+        "landmark": {
+            "id": 13762,
+            "title": "An Experimental Application of the Delphi",
+            "year": 1963,
+            "citation_count": 5842
+        },
+        "central": {
+            "id": 838,
+            "title": "Early consensus in an asynchronous system with a weak failure detector",
+            "year": 1997,
+            "in_cluster_degree": 9
+        }
+    },
+    {
+        "cluster_id": 1,
+        "cluster_label": "Contract Net and Task Allocation",
+        "landmark": {
+            "id": 26185,
+            "title": "Simulation and Visualization of a Market-Based Model for Logistics Management in Transportation",
+            "year": 2004,
+            "citation_count": 8033
+        },
+        "central": {
+            "id": 2970,
+            "title": "Enterprise a Market-Like Task Scheduler for Distributed Computing Environments",
+            "year": 2011,
+            "in_cluster_degree": 6
+        }
+    },
+    {
+        "cluster_id": 2,
+        "cluster_label": "Organizational Design and Team Structures",
+        "landmark": {
+            "id": 13787,
+            "title": "The Structure of Scientific Revolutions",
+            "year": 1963,
+            "citation_count": 35517
+        },
+        "central": {
+            "id": 1495,
+            "title": "Commitments and conventions: The foundation of coordination in multi-agent systems",
+            "year": 1993,
+            "in_cluster_degree": 10
+        }
+    },
+    {
+        "cluster_id": 3,
+        "cluster_label": "Distributed Planning, Problem Solving, and Teamwork",
+        "landmark": {
+            "id": 38,
+            "title": "Consensus Problems in Networks of Agents With Switching Topology and Time-Delays",
+            "year": 2004,
+            "citation_count": 12546
+        },
+        "central": {
+            "id": 38,
+            "title": "Consensus Problems in Networks of Agents With Switching Topology and Time-Delays",
+            "year": 2004,
+            "in_cluster_degree": 98
+        }
+    },
+    {
+        "cluster_id": 4,
+        "cluster_label": "Agent Communication Languages and Protocols",
+        "landmark": {
+            "id": 2210,
+            "title": "A Mathematical Theory of Communication",
+            "year": 1948,
+            "citation_count": 78226
+        },
+        "central": {
+            "id": 263,
+            "title": "Agent communication languages: rethinking the principles",
+            "year": 1998,
+            "in_cluster_degree": 5
+        }
+    },
+    {
+        "cluster_id": 5,
+        "cluster_label": "Argumentation and Structured Debate",
+        "landmark": {
+            "id": 33026,
+            "title": "Abstracting Assumptions in Structured Argumentation",
+            "year": 2024,
+            "citation_count": 6211
+        },
+        "central": {
+            "id": 10607,
+            "title": "On the Acceptability of Arguments and its Fundamental Role in Nonmonotonic Reasoning, Logic Programming and n-Person Games",
+            "year": 1995,
+            "in_cluster_degree": 13
+        }
+    },
+    {
+        "cluster_id": 6,
+        "cluster_label": "Negotiation, Game Theory, and Economic Paradigms",
+        "landmark": {
+            "id": 19493,
+            "title": "Collective Action and the Evolution of Social Norms",
+            "year": 2000,
+            "citation_count": 3949
+        },
+        "central": {
+            "id": 84,
+            "title": "Negotiation decision functions for autonomous agents",
+            "year": 1998,
+            "in_cluster_degree": 15
+        }
+    },
+    {
+        "cluster_id": 7,
+        "cluster_label": "BDI and Cognitive Agent Architectures",
+        "landmark": {
+            "id": 13783,
+            "title": "Toward a Theory of Situation Awareness in Dynamic Systems",
+            "year": 1995,
+            "citation_count": 8143
+        },
+        "central": {
+            "id": 3422,
+            "title": "Modeling rational agents with a BDI-architecture",
+            "year": 1997,
+            "in_cluster_degree": 30
+        }
+    },
+    {
+        "cluster_id": 8,
+        "cluster_label": "Human-Agent Interaction and HITL",
+        "landmark": {
+            "id": 13784,
+            "title": "Humans and Automation: Use, Misuse, Disuse, Abuse",
+            "year": 1997,
+            "citation_count": 3712
+        },
+        "central": {
+            "id": 13784,
+            "title": "Humans and Automation: Use, Misuse, Disuse, Abuse",
+            "year": 1997,
+            "in_cluster_degree": 4
+        }
+    },
+    {
+        "cluster_id": 9,
+        "cluster_label": "Trust, Reputation, and Norms",
+        "landmark": {
+            "id": 16707,
+            "title": "Trust: making and breaking cooperative relations",
+            "year": 1989,
+            "citation_count": 4057
+        },
+        "central": {
+            "id": 129,
+            "title": "An integrated trust and reputation model for open multi-agent systems",
+            "year": 2006,
+            "in_cluster_degree": 9
+        }
+    },
+    {
+        "cluster_id": 10,
+        "cluster_label": "Multi-Agent Engineering: Methodologies, Frameworks, and Platforms",
+        "landmark": {
+            "id": 42,
+            "title": "An Introduction to MultiAgent Systems",
+            "year": 2002,
+            "citation_count": 5171
+        },
+        "central": {
+            "id": 59,
+            "title": "The Gaia Methodology for Agent-Oriented Analysis and Design",
+            "year": 2000,
+            "in_cluster_degree": 21
+        }
+    },
+    {
+        "cluster_id": 11,
+        "cluster_label": "Multi-Agent Robotics and Embodied Teams",
+        "landmark": {
+            "id": 39,
+            "title": "Consensus and Cooperation in Networked Multi-Agent Systems",
+            "year": 2007,
+            "citation_count": 10146
+        },
+        "central": {
+            "id": 40,
+            "title": "Coordination of groups of mobile autonomous agents using nearest neighbor rules",
+            "year": 2003,
+            "in_cluster_degree": 56
+        }
+    },
+    {
+        "cluster_id": 12,
+        "cluster_label": "Evaluation Benchmarks and Failure Analysis",
+        "landmark": {
+            "id": 28780,
+            "title": "A multi-agent systems &quot;turing challenge&quot;",
+            "year": 2013,
+            "citation_count": 687
+        },
+        "central": {
+            "id": 14277,
+            "title": "AgentBoard: An Analytical Evaluation Board of Multi-turn LLM Agents",
+            "year": 2024,
+            "in_cluster_degree": 3
+        }
+    },
+    {
+        "cluster_id": 13,
+        "cluster_label": "Memory and Context Management",
+        "landmark": {
+            "id": 8238,
+            "title": "Towards Reliable Multi-Agent Systems for Marketing Applications via Reflection, Memory, and Planning",
+            "year": 2025,
+            "citation_count": 3183
+        },
+        "central": null
+    },
+    {
+        "cluster_id": 14,
+        "cluster_label": "Learning and Adaptation",
+        "landmark": {
+            "id": 18255,
+            "title": "Ant system: optimization by a colony of cooperating agents",
+            "year": 1996,
+            "citation_count": 11742
+        },
+        "central": {
+            "id": 13882,
+            "title": "Markov games as a framework for multi-agent reinforcement learning",
+            "year": 1994,
+            "in_cluster_degree": 90
+        }
+    },
+    {
+        "cluster_id": 15,
+        "cluster_label": "Modeling and Simulating Artificial Societies",
+        "landmark": {
+            "id": 28280,
+            "title": "Effect of time delays on agents&apos; interaction dynamics",
+            "year": 2011,
+            "citation_count": 6177
+        },
+        "central": {
+            "id": 406,
+            "title": "Tutorial on Agent-Based Modeling and Simulation PART 2: How to Model with Agents",
+            "year": 2006,
+            "in_cluster_degree": 2
+        }
+    }
+]

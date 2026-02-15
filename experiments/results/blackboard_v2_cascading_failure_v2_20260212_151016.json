@@ -1,0 +1,191 @@
+{
+  "experiment_id": "7a84a739",
+  "pattern": "blackboard_v2",
+  "benchmark": "cascading_failure_v2",
+  "model": "claude-opus-4-6",
+  "num_agents": 3,
+  "num_rounds": 5,
+  "total_tokens": 28003,
+  "wall_time_seconds": 255.57565784454346,
+  "quality_score": 82.0,
+  "token_efficiency": 2.9282576866764276,
+  "final_output": "\n\n# Vector Database Performance Comparison for Production RAG Systems\n## Definitive Technical Report for $500K Infrastructure Investment Decision\n\n---\n\n## EXECUTIVE SUMMARY\n\nThis report compares five vector databases\u2014**Pinecone, Weaviate, Qdrant, Milvus, and pgvector**\u2014for production RAG workloads across three scale tiers (1M, 100M, 1B vectors). It synthesizes evidence from ANN-Benchmarks (independent), Qdrant's vendor benchmarks, Zilliz's VectorDBBench, Supabase's pgvector benchmarks, and Pinecone's published documentation.\n\n**The most critical finding: no single independent benchmark covers all five systems at equivalent hardware, production settings, and scale.** At 100M and 1B vectors, **zero independent benchmark data exists for any system.** Every recommendation at those tiers is necessarily grounded in architectural analysis and vendor claims rather than empirical measurement.\n\n### Recommendation Summary\n\n| Scale | Primary Recommendation | Confidence | Basis |\n|---|---|---|---|\n| **Small** (<1M, <$1K/mo) | **pgvector** (Postgres-native teams) or **Qdrant** (dedicated vector DB) | **Medium** \u2014 supported by multiple single-node benchmarks at 1M-10M | Empirical data (B.1) |\n| **Medium** (100M, $1-10K/mo) | **Qdrant** or **Milvus** (self-hosted); **Pinecone Serverless** (managed) | **Low-Medium** \u2014 extrapolated from \u226410M benchmarks + architectural analysis | Architecture (B.2) + limited data |\n| **Large** (1B, $10K+/mo) | **Milvus/Zilliz Cloud** or **Pinecone** | **Low** \u2014 no independent performance data at this scale | Architecture only (B.3) |\n\n**Fiduciary warning**: A $500K commitment at medium or large scale should be preceded by a **funded proof-of-concept benchmark** on your actual workload. This report identifies which candidates merit that investment, but cannot substitute for it.\n\n---\n\n## PART A: ANALYTICAL FRAMEWORK\n\n### A.1 Comparison Dimensions\n\n| Dimension | Metric | RAG Relevance |\n|---|---|---|\n| **Query Latency** | P50, P95, P99 (ms) | RAG retrieval is on the critical path before LLM generation (~500-2000ms). Vector search adding >100ms P95 is material. |\n| **Throughput** | Queries per second (QPS) at target recall | Determines concurrent user capacity and cost-per-query |\n| **Recall** | Recall@10 at fixed QPS target | Incorrect retrieval \u2192 hallucinated or irrelevant LLM output. The defining quality metric for RAG. |\n| **Filtered Search** | QPS and recall with metadata filters (1%, 10% selectivity) | 50-80% of production RAG queries filter by tenant, document source, date, or permission scope |\n| **Ingestion Throughput** | Vectors/sec during concurrent query serving | Production RAG systems ingest continuously; batch-only benchmarks are misleading |\n| **Index Build Time** | Minutes/hours for full build or rebuild | Affects initial deployment, disaster recovery, and schema migration |\n| **Cost** | TCO = Infrastructure + Ops Labor ($150/hr) + Over-provisioning buffer | The actual decision variable |\n| **Operational Complexity** | Qualitative (Low/Medium/High) | Determines ongoing staffing and on-call burden |\n| **Durability / HA** | Replication, multi-region, backup/restore capabilities | Non-negotiable for production at this investment level |\n\n### A.2 Workload Profiles\n\n| Profile | Vectors | Dimensionality | Sustained QPS | Filter Frequency | Example Use Case |\n|---|---|---|---|---|---|\n| **Small** | 1M | 1536 (OpenAI) | 10-50 | 50% filtered | Startup knowledge base |\n| **Medium** | 100M | 768-1536 | 200-500 | 70% filtered | Multi-tenant SaaS RAG |\n| **Large** | 1B | 768-1536 | 1,000-5,000 | 80% filtered | Enterprise search platform |\n\n### A.3 Measurement Methodology Requirements\n\nFor any benchmark to be credible for this decision, it must satisfy:\n\n1. **Equivalent hardware** across all systems (same EC2 instance type, same memory, same storage class)\n2. **Real embeddings** (not random vectors) \u2014 Wikipedia/Cohere/OpenAI corpora preferred, as clustered real data behaves differently from uniform random data for IVF and HNSW\n3. **Production settings enabled**: WAL on, replication factor \u2265 1, durability guarantees active\n4. **Both filtered and unfiltered queries** measured separately\n5. **Concurrent load** applied via multiple client threads (not single-threaded sequential)\n6. **Warm-up period** before measurement; cold-start latency reported separately\n7. **Recall measured at the same QPS target** (not maximum QPS at arbitrary recall)\n\n### A.4 Provenance System\n\nEvery data point in Part B carries one of:\n\n- \ud83d\udfe2 **Independent benchmark** \u2014 third-party, reproducible, linked\n- \ud83d\udfe1 **Vendor-published** \u2014 linked, potential bias flagged explicitly\n- \ud83d\udfe0 **Anecdotal / extrapolated** \u2014 methodology and assumptions stated\n- \ud83d\udd34 **DATA NOT AVAILABLE** \u2014 no credible source exists\n\n---\n\n## PART B: EMPIRICAL PERFORMANCE DATA\n\n### B.1 Small Scale \u2014 1M Vectors, 1536-dim, HNSW\n\n#### B.1.1 Unfiltered Query Performance\n\n| Database | P50 (ms) | P95 (ms) | P99 (ms) | QPS | Recall@10 | Source & Provenance |\n|---|---|---|---|---|---|---|\n| **Qdrant** | ~2 | ~5 | ~8 | ~1,500 | 0.98 | \ud83d\udfe1 Qdrant benchmarks (2024), single-node, 1536-dim OpenAI embeddings |\n| **Milvus** | ~4 | ~10 | ~15 | ~800\u20132,100 | 0.97\u20130.98 | \ud83d\udfe1 Range: low end from Qdrant bench, high end from VectorDBBench (10M, 768-dim, 8vCPU/32GB). Cross-vendor disagreement. |\n| **Weaviate** | ~6 | ~15 | ~22 | ~600\u20131,100 | 0.96\u20130.97 | \ud83d\udfe1 Range: Qdrant bench (~600) vs VectorDBBench (~1,100). Go runtime overhead noted. |\n| **pgvector 0.7 (HNSW)** | ~7 | ~25 | ~32 | ~380 | 0.97 | \ud83d\udfe1 Supabase benchmarks (8 vCPU, 32GB, 1M vectors, 1536-dim) |\n| **Pinecone (pods, p2)** | ~8\u201315 | ~25\u201340 | ~50\u201380 | ~200/pod | ~0.95\u20130.98 | \ud83d\udfe0 Anecdotal user reports from blog posts (2023-2024). Pinecone publishes no reproducible benchmarks. |\n| **Pinecone (Serverless)** | <50 (SLA) | \u2014 | <200 (inferred) | Not disclosed | Not disclosed | \ud83d\udfe1 Pinecone documentation/SLA only. Cold-start latency reported 200-800ms after idle (\ud83d\udfe0 anecdotal). |\n\n**Cross-validation note**: Qdrant appears in the top position in *both* its own vendor benchmark *and* the Zilliz/Milvus-affiliated VectorDBBench. This cross-validation from competing vendors lends moderate confidence to Qdrant's strong single-node performance. Milvus and Weaviate teams have disputed specific Qdrant benchmark configurations but have not published counter-benchmarks on identical hardware.\n\n**ANN-Benchmarks context** \ud83d\udfe2: On glove-100 (1.2M vectors, 100-dim \u2014 lower dimensionality), hnswlib (Qdrant's underlying library) achieves ~1,200-1,500 QPS at 0.99 recall; pgvector HNSW achieves ~400-600 QPS; Weaviate ~800-1,100. These ratios are broadly consistent with the vendor benchmarks above, though the absolute numbers differ due to dimensionality (100 vs 1536) and dataset differences.\n\n#### B.1.2 Filtered Search Performance (1% selectivity, 1M vectors)\n\n| Database | QPS (filtered) | Recall@10 (filtered) | Filter Mechanism | Source |\n|---|---|---|---|---|\n| **Qdrant** | ~1,200 | ~0.97 | Pre-filtering during HNSW traversal (payload index) | \ud83d\udfe1 Qdrant benchmarks |\n| **Milvus** | ~350 | ~0.94 | Historically post-filtering; iterator-based improvements in v2.3+ | \ud83d\udfe1 Qdrant benchmarks (pre-Milvus 2.3 improvements) |\n| **Weaviate** | ~180 | ~0.92 | Pre-filtering added in v1.18+; benchmark predates this | \ud83d\udfe1 Qdrant benchmarks (pre-v1.18 improvement) |\n| **pgvector** | ~200\u2013300 | ~0.95 | SQL WHERE clause + ANN (PostgreSQL planner handles filtering) | \ud83d\udfe0 Estimated; no formal filtered benchmark published |\n| **Pinecone** | \ud83d\udd34 DATA NOT AVAILABLE | \ud83d\udd34 | Metadata filtering supported; ~20-40% QPS degradation reported | \ud83d\udfe0 Anecdotal |\n\n**Critical RAG insight**: Filtered search is arguably more important than unfiltered for production RAG. Qdrant's architectural pre-filtering advantage is significant. However, both Weaviate (v1.18+) and Milvus (v2.3+) have shipped improvements that are **not yet reflected in any published benchmark**. The Qdrant-published filtered numbers for competitors may be stale.\n\n#### B.1.3 pgvector Performance Degradation Curve\n\npgvector shows notable performance degradation with scale on single-node hardware \ud83d\udfe1 (Supabase benchmarks, 1536-dim, HNSW):\n\n| Scale | QPS | P50 (ms) | P99 (ms) | Recall@10 | Hardware |\n|---|---|---|---|---|---|\n| 250K | ~520 | ~4 | ~18 | 0.98 | 4 vCPU, 16GB |\n| 1M | ~380 | ~7 | ~32 | 0.97 | 8 vCPU, 32GB |\n| 5M | ~180 | ~15 | ~75 | 0.95 | 16 vCPU, 64GB |\n| 10M | ~80 | ~35 | ~180 | 0.92 | 16 vCPU, 64GB |\n\nThis degradation curve is important: pgvector remains competitive at \u22641M but becomes increasingly uncompetitive beyond 5M vectors. Index build time at 10M: ~45 minutes.\n\n---\n\n### B.2 Medium Scale \u2014 100M Vectors, 1536-dim\n\n**\ud83d\udd34 CRITICAL DATA GAP: No independent benchmark exists for any system at 100M vectors.**\n\nAll entries below are architectural assessments and extrapolations, not empirical measurements.\n\n| Database | Estimated QPS | Estimated P95 (ms) | Estimated Recall@10 | Architectural Readiness | Source |\n|---|---|---|---|---|---|\n| **Milvus** (clustered) | ~500\u20131,000 | ~20\u201350 | ~0.95 | **Strongest**: Purpose-built disaggregated architecture (separate query/index/data nodes, etcd coordination, S3/MinIO storage layer). Most mature distributed design. | \ud83d\udfe0 Extrapolated from VectorDBBench 10M + Zilliz marketing materials |\n| **Qdrant** (clustered, 3+ nodes) | \ud83d\udd34 | \ud83d\udd34 | \ud83d\udd34 | **Good**: Raft-based consensus, sharding + replication since v1.1. Production-ready but fewer public references at this scale. | No data |\n| **Weaviate** (clustered) | \ud83d\udd34 | \ud83d\udd34 | \ud83d\udd34 | **Developing**: Raft-based replication (v1.25+), hash-based sharding. Relatively newer distributed implementation. | No data |\n| **Pinecone Serverless** | \ud83d\udd34 (specific QPS) | <50ms P50 (SLA claim) | \ud83d\udd34 | **Claimed**: Proprietary disaggregated compute/storage. Claims 100M+ support. No architectural transparency for validation. | \ud83d\udfe1 Pinecone SLA only |\n| **pgvector** | Not viable | Not viable | Not viable | Single-node PostgreSQL cannot handle ~600GB+ raw vectors (100M \u00d7 1536 \u00d7 4 bytes). Would require Citus/manual sharding with no published benchmarks or community precedent. | Architectural assessment |\n\n**Architectural comparison at 100M**:\n\n| Feature | Milvus | Qdrant | Weaviate | Pinecone |\n|---|---|---|---|---|\n| Storage/Compute Disaggregation | \u2705 (S3 + query nodes) | \u274c (coupled) | \u274c (coupled) | \u2705 (claimed) |\n| Independent Scaling of Read/Write | \u2705 | Partial (add read replicas) | Partial | \u2705 (claimed) |\n| Segment-level Index Management | \u2705 | \u274c (collection-level) | \u274c | Unknown |\n| Multi-tenancy at Scale | \u2705 (partition keys) | \u2705 (collection-per-tenant or payload filtering) | \u2705 (native multi-tenancy) | \u2705 (namespaces) |\n\n---\n\n### B.3 Large Scale \u2014 1B Vectors, 1536-dim\n\n**\ud83d\udd34 No independent benchmark data exists for any system at 1B vectors.**\n\n| Database | Data Available | Architectural Assessment |\n|---|---|---|\n| **Milvus / Zilliz Cloud** | \ud83d\udd34 No published benchmark. Zilliz claims production deployments at 1B+. | Architecture explicitly designed for this scale: disaggregated storage (S3), streaming/batch separation, GPU index building support. Most credible candidate architecturally. |\n| **Pinecone** | \ud83d\udd34 No published benchmark. Claims \"billions of vectors\" support. | Proprietary serverless architecture. No transparency, but significant venture funding and enterprise customer base suggests real-world validation. |\n| **Qdrant** | \ud83d\udd34 No data. | Raft consensus may face coordination overhead at extreme shard counts. Unclear if validated at this scale. |\n| **Weaviate** | \ud83d\udd34 No data. | Newer distributed implementation. Unlikely to be the first choice at 1B without more maturity evidence. |\n| **pgvector** | \ud83d\udd34 Not architecturally viable. | Would require heroic custom engineering with no community support or precedent. |\n\n---\n\n### B.4 Index Build Time\n\n| Database | 1M (1536-dim) | 10M | 100M | Source |\n|---|---|---|---|---|\n| **pgvector (HNSW)** | ~8\u201312 min | ~45 min | \ud83d\udd34 Est. 8\u201315 hrs (single-node) | \ud83d\udfe1 Supabase |\n| **Qdrant** | ~2\u20134 min | ~20\u201330 min | \ud83d\udd34 | \ud83d\udfe0 User reports |\n| **Milvus** | ~3\u20135 min | ~25\u201340 min | ~4\u20138 hrs (distributed) | \ud83d\udfe0 Zilliz documentation |\n| **Weaviate** | ~3\u20135 min | ~30\u201345 min | \ud83d\udd34 | \ud83d\udfe0 User reports |\n| **Pinecone** | Abstracted | Abstracted | Abstracted | N/A (managed) |\n\n---\n\n### B",
+  "agent_stats": {
+    "analyst": {
+      "role": "specialist",
+      "tokens_in": 572,
+      "tokens_out": 1263,
+      "messages_sent": 2,
+      "messages_received": 0
+    },
+    "researcher": {
+      "role": "specialist",
+      "tokens_in": 1929,
+      "tokens_out": 2048,
+      "messages_sent": 2,
+      "messages_received": 0
+    },
+    "synthesizer": {
+      "role": "specialist",
+      "tokens_in": 10938,
+      "tokens_out": 8192,
+      "messages_sent": 4,
+      "messages_received": 0
+    }
+  },
+  "metadata": {
+    "control_shell": "llm_powered",
+    "summarization": true,
+    "llm_stats": {
+      "model": "claude-opus-4-6",
+      "total_calls": 10,
+      "total_tokens_in": 15585,
+      "total_tokens_out": 12418,
+      "total_tokens": 28003,
+      "total_latency_ms": 255572.06201553345,
+      "avg_latency_ms": 25557.206201553345
+    }
+  },
+  "messages": [
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated task",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated contributions",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated summary",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "analyst",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated contributions",
+      "token_count": 0
+    },
+    {
+      "sender": "analyst",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "\n\n# Analyst Contribution \u2014 Round 1\n\n## Key Structural Issues Identified\n\n### 1. Data Availability Gap (CRITICAL)\nThe task demands \"ACTUAL benchmark numbers\" across 5 databases \u00d7 3 scales \u00d7 multiple metrics. Here is the honest landscape:\n\n- **No single apples-to-apples benchmark exists** that covers all 5 systems at all 3 scales with identical hardware, dataset, and query distribution. This is the central problem of this report.\n- **ANN-Benchmarks (erikbern/ann-benchmarks)** covers algorithmic re",
+      "token_count": 1835
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "researcher",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated contributions",
+      "token_count": 0
+    },
+    {
+      "sender": "researcher",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "\n\n# Researcher Contribution \u2014 Round 2\n\n## EVIDENCE BASE FOR VECTOR DATABASE COMPARISON\n\nI have compiled the most credible available data sources below, organized by the analyst's framework. Every number carries a provenance tag per the analyst's system.\n\n---\n\n## 1. ANN-Benchmarks Data (erikbern/ann-benchmarks) \u2014 Independent \ud83d\udfe2\n\n**Source**: http://ann-benchmarks.com/ \u2014 single-machine, in-memory, standardized datasets\n\n**Dataset**: glove-100 (1.2M vectors, 100-dim) and various others up to ~30M\n\nKe",
+      "token_count": 3977
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "synthesizer",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated contributions",
+      "token_count": 0
+    },
+    {
+      "sender": "synthesizer",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "\n\n# Vector Database Performance Comparison for Production RAG Systems\n\n## Technical Report for Infrastructure Investment Decision ($500K)\n\n---\n\n## EXECUTIVE SUMMARY\n\nThis report compares five vector databases\u2014**Pinecone, Weaviate, Qdrant, Milvus, and pgvector**\u2014for production RAG workloads across three scale tiers. The central finding is that **no single apples-to-apples benchmark exists covering all five systems at all three scales on identical hardware.** Consequently, this report synthesizes ",
+      "token_count": 8085
+    },
+    {
+      "sender": "control_shell",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated summary",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "synthesizer",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated contributions",
+      "token_count": 0
+    },
+    {
+      "sender": "synthesizer",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "\n\n# Vector Database Performance Comparison for Production RAG Systems\n## Definitive Technical Report for $500K Infrastructure Investment Decision\n\n---\n\n## EXECUTIVE SUMMARY\n\nThis report compares five vector databases\u2014**Pinecone, Weaviate, Qdrant, Milvus, and pgvector**\u2014for production RAG workloads across three scale tiers (1M, 100M, 1B vectors). It synthesizes evidence from ANN-Benchmarks (independent), Qdrant's vendor benchmarks, Zilliz's VectorDBBench, Supabase's pgvector benchmarks, and Pinec",
+      "token_count": 11045
+    },
+    {
+      "sender": "control_shell",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated summary",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "control_shell",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "STOP: The synthesizer has already produced two rounds of output (rounds 3 and 4), with the latest contribution at 12,231 chars \u2014 a substantial technical report. The board has had contributions from all three agents across 5 rounds, building from analyst identification of issues, through researcher evidence gathering, to two synthesizer integration passes. The second synthesizer pass likely refined and expanded the first. Further iterations would yield diminishing returns. The board is complete.",
+      "token_count": 0
+    }
+  ]
+}

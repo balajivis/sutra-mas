@@ -1,0 +1,262 @@
+{
+  "experiment_id": "26598d21",
+  "pattern": "joint_persistent_goals",
+  "benchmark": "research_synthesis",
+  "model": "claude-opus-4-6",
+  "num_agents": 4,
+  "num_rounds": 4,
+  "total_tokens": 22718,
+  "wall_time_seconds": 294.10098004341125,
+  "quality_score": 82.0,
+  "token_efficiency": 3.609472664847258,
+  "final_output": "# The State of Multi-Agent LLM Systems: A Comprehensive Synthesis\n\n## 1. When Multi-Agent Systems Help \u2014 and When They Hurt\n\nThe empirical evidence across these five papers converges on a nuanced conclusion: **multi-agent systems are not universally beneficial, and their effectiveness is highly conditional on a specific set of measurable factors**. Kim et al. (Paper 2) provide the most systematic framework, showing that individual agent capability acts as a gating threshold \u2014 when agents score below approximately 45% on a task, multi-agent collaboration *amplifies* errors rather than compensating for them, with independent agents exhibiting 17.2x error amplification compared to single-agent baselines. Above this threshold, collaboration yields gains, but the magnitude depends critically on **task decomposability**, which predicts multi-agent benefit with 87% accuracy. Parallelizable tasks see up to 80.9% improvement, while tightly sequential tasks suffer 39\u201370% degradation due to error propagation across agent handoffs. Cemri et al. (Paper 1) quantify one key mechanism behind this degradation: inter-agent misalignment accounts for 36.9% of all failures \u2014 a concrete \"collaboration tax\" that must be offset by the gains from specialization and parallelism.\n\nThe apparent contradiction between Paper 2's findings of degradation and Anthropic's (Paper 4) striking 90.2% improvement resolves cleanly once we account for **architectural design and resource allocation**. Paper 4's success is tied to the orchestrator-worker topology with structured critique, a design that minimizes the unstructured inter-agent communication driving Paper 1's failures. Crucially, Paper 4 demonstrates that token allocation explains approximately 80% of performance variance, suggesting that *how* resources are distributed matters far more than agent count. Paper 5 reinforces this with its blackboard architecture, showing 13\u201357% improvement over supervisor patterns while consuming 3x fewer tokens through shared state. Together, these findings establish that multi-agent effectiveness is predicted by four interacting factors: **(1)** individual agent capability relative to task difficulty, **(2)** task decomposability and structure, **(3)** coordination architecture and communication design, and **(4)** resource allocation strategy.\n\n## 2. Architectural Principles: What Works and Why\n\nThe five papers collectively map a rich design space, and their combined evidence converges on a clear hierarchy: **hierarchical and structured architectures consistently outperform both fully centralized and fully decentralized alternatives**. Tran et al. (Paper 3) show that hierarchical topology combined with dynamic task decomposition achieves the best results on complex tasks, capturing both global coherence from centralized oversight and local adaptivity from decentralized execution. Paper 4's orchestrator-worker pattern operationalizes this principle, while Paper 5's blackboard architecture provides an elegant variation where shared state mediates agent interactions without a single bottleneck controller. Paper 2's findings on independent agents serve as an instructive counterpoint: without coordination structure, error amplification scales catastrophically, demonstrating that agent autonomy without architectural guardrails is actively harmful.\n\nThe single most robust finding across all five papers is that **how agents communicate matters more than how much they communicate**. Paper 3 establishes a 23% performance advantage for structured communication protocols over free-form dialogue. Paper 4 extends this into the reasoning domain, showing that structured critique (generator/critic) outperforms unstructured multi-agent debate. Paper 5's blackboard architecture provides the most elegant embodiment: replacing redundant point-to-point messaging with a shared state repository cuts token consumption by 3x while improving coordination quality. Paper 2's centralized coordination result \u2014 reducing error amplification from 17.2x to 4.4x \u2014 demonstrates the same principle from a failure-prevention perspective.\n\nFour design principles emerge with strong cross-paper support. First, **structured communication dominates unstructured communication** \u2014 the most replicated finding across the corpus. Second, **shared state dominates redundant messaging**: architectures maintaining common knowledge substrates are more token-efficient and produce fewer coordination failures. Third, **token allocation matters more than agent count** (Paper 4): performance is bounded by total cognitive budget and how intelligently it is distributed, not by the number of agents. Fourth, **knowledge diversity matters more than knowledge quantity** (Paper 5): agents should be selected for complementary expertise rather than redundant coverage. Together, these principles point toward an ideal of a small, diverse team of specialists communicating through structured protocols over shared state, coordinated by a lightweight hierarchical mechanism \u2014 a philosophy privileging architectural elegance over brute-force scaling.\n\n## 3. Failure Modes, Limitations, and Open Challenges\n\nPaper 1 provides the most systematic failure taxonomy, identifying 14 distinct failure types across three levels: **intra-agent** (premature termination, instruction ignoring, wrong action selection), **inter-agent** (information withholding, conversational digressions, lack of verification), and **system-level** (task allocation errors, redundant actions, constraint violations). The foundational finding is that multi-agent systems fail even when individual agents can solve constituent tasks independently \u2014 the architecture itself introduces emergent failure modes irreducible to individual limitations. Paper 2 provides quantitative grounding: 39\u201370% degradation on sequential tasks operationalizes Paper 1's qualitative taxonomy through the mechanism of error amplification in sequential dependency chains, where small early-stage errors compound multiplicatively.\n\nThe connection between Paper 1's capability-independent failures and Paper 2's 45% threshold is particularly illuminating. Below this threshold, coordination overhead and error amplification overwhelm any benefits from decomposition and specialization. The 14 failure modes activate differentially as a function of the gap between task demands and agent capability, with inter-agent failures becoming particularly devastating in sequential pipelines. This explains *why* Paper 1 observes that individually capable agents fail collectively: when sub-task assignments push agents near their capability boundaries, the inter-agent failure modes \u2014 information loss, verification failures, misaligned assumptions \u2014 become dominant.\n\nSeveral fundamental tensions define the current frontier:\n\n- **Scaling paradox**: Naively adding agents fails (Paper 2), yet purposefully designed architectures achieve dramatic gains (Papers 4, 5). The resolution lies in architectural specificity \u2014 there is no general \"more agents = better\" law, only specific designs that harness collaboration while constraining its costs.\n- **Error amplification vs. error correction**: Sequential pipelines amplify errors (Papers 1, 2), while parallel-aggregation and structured critique architectures suppress them (Papers 4, 5). These reflect different architectural regimes, not contradictory findings.\n- **Coordination overhead vs. specialization benefit**: Paper 1 shows coordination costs can exceed specialization gains, yet Papers 4 and 5 demonstrate that tightly constrained coordination allows specialization benefits to dominate. The precise boundary conditions remain poorly characterized.\n- **Evaluation gaps**: The field lacks standardized benchmarks with mandatory single-agent baselines, meaning claimed multi-agent improvements may be inflated or confounded.\n\nKey open challenges include: developing theoretical foundations that predict multi-agent advantage from first principles rather than empirical thresholds; designing runtime failure detection and recovery mechanisms for the failure modes Paper 1 identifies; establishing cost-performance frameworks that evaluate whether gains justify the computational overhead of multiple LLM calls; and testing whether architectural insights generalize beyond reasoning and factual QA to creative, planning, and embodied domains.\n\n## 4. Integrative Conclusion\n\nThe current state of multi-agent LLM systems is defined by a productive tension between **demonstrated potential and systematic fragility**. On one hand, well-designed architectures \u2014 orchestrator-worker patterns with structured critique (Paper 4), blackboard-based shared state (Paper 5), hierarchical topologies with dynamic decomposition (Paper 3) \u2014 achieve performance that substantially surpasses single-agent baselines on appropriate tasks, validating the hypothesis that LLM collaboration can yield emergent collective intelligence. On the other hand, the 14 failure modes catalogued by Paper 1, the error amplification dynamics quantified by Paper 2, and the 36.9% inter-agent failure rate collectively demonstrate that multi-agent architecture is itself a source of emergent risk \u2014 producing failures that do not exist in single-agent settings and that can overwhelm the benefits of specialization.\n\nThe synthesis across all five papers suggests that the field is transitioning from an exploratory phase \u2014 \"can multi-agent systems work?\" \u2014 to an engineering science phase: **\"under what measurable conditions do specific architectures outperform single-agent alternatives, and what design principles reliably produce those conditions?\"** The empirical evidence now provides concrete, quantitative answers. Task decomposability predicts architectural fit with 87% accuracy. Individual capability must exceed a ~45% threshold for collaboration to help rather than hurt. Token allocation explains ~80% of performance variance. Structured communication outperforms free-form dialogue by 23%. Shared state reduces token costs by 3x. These are not vague heuristics but actionable engineering parameters. The path forward requires formalizing these empirical regularities into predictive theory, establishing rigorous evaluation standards, and developing adaptive architectures that can diagnose their own failure modes and dynamically reconfigure \u2014 moving multi-agent LLM systems from brittle, task-specific constructions toward robust, principled engineering practice.",
+  "agent_stats": {
+    "planner": {
+      "role": "coordinator",
+      "tokens_in": 6361,
+      "tokens_out": 2855,
+      "messages_sent": 3,
+      "messages_received": 0
+    },
+    "executor_a": {
+      "role": "specialist",
+      "tokens_in": 475,
+      "tokens_out": 902,
+      "messages_sent": 2,
+      "messages_received": 0
+    },
+    "executor_b": {
+      "role": "specialist",
+      "tokens_in": 461,
+      "tokens_out": 943,
+      "messages_sent": 2,
+      "messages_received": 0
+    },
+    "executor_c": {
+      "role": "specialist",
+      "tokens_in": 2529,
+      "tokens_out": 8192,
+      "messages_sent": 8,
+      "messages_received": 0
+    }
+  },
+  "metadata": {
+    "replans": 0,
+    "status_broadcasts": [
+      {
+        "agent": "executor_a",
+        "round": 1,
+        "status": "achieved"
+      },
+      {
+        "agent": "executor_b",
+        "round": 1,
+        "status": "achieved"
+      },
+      {
+        "agent": "executor_c",
+        "round": 1,
+        "status": "committed"
+      },
+      {
+        "agent": "executor_c",
+        "round": 2,
+        "status": "committed"
+      },
+      {
+        "agent": "executor_c",
+        "round": 3,
+        "status": "committed"
+      },
+      {
+        "agent": "executor_c",
+        "round": 4,
+        "status": "committed"
+      }
+    ],
+    "final_commitments": {
+      "executor_a": "achieved",
+      "executor_b": "achieved",
+      "executor_c": "committed"
+    },
+    "llm_stats": {
+      "model": "claude-opus-4-6",
+      "total_calls": 8,
+      "total_tokens_in": 9826,
+      "total_tokens_out": 12892,
+      "total_tokens": 22718,
+      "total_latency_ms": 294097.163438797,
+      "avg_latency_ms": 36762.145429849625
+    }
+  },
+  "messages": [
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated joint_goal",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated plan",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated commitments",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated replans",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated status_broadcasts",
+      "token_count": 0
+    },
+    {
+      "sender": "planner",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated plan",
+      "token_count": 0
+    },
+    {
+      "sender": "planner",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated commitments",
+      "token_count": 0
+    },
+    {
+      "sender": "planner",
+      "receiver": "__broadcast__",
+      "performative": "request",
+      "content": "```json\n{\"subtasks\": {\"executor_a\": \"Synthesize the core empirical findings about multi-agent system performance across all 5 papers. Specifically: (1) Identify the key quantitative findings about when multi-agent systems help vs. hurt performance (e.g., Paper 1's 36.9% inter-agent failure rate, Paper 2's error amplification factors and 45% capability threshold, Paper 4's 90.2% improvement with orchestrator-worker, Paper 5's 13-57% improvement with blackboard). (2) Reconcile apparent contradicti",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_a",
+      "receiver": "__broadcast__",
+      "performative": "inform",
+      "content": "# Synthesis of Core Empirical Findings on Multi-Agent System Performance\n\n## Unified Empirical Picture\n\nThe empirical evidence across these five papers converges on a nuanced conclusion: **multi-agent systems are not universally beneficial, and their effectiveness is highly conditional on a specific set of measurable factors**. Paper 2 provides the most systematic framework for understanding when multi-agent configurations help versus hurt. Its central finding is that individual agent capability",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_a",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated status_broadcasts",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_b",
+      "receiver": "__broadcast__",
+      "performative": "inform",
+      "content": "## Architectural and Design Synthesis Across Five Papers\n\n**Coordination Architectures: A Convergent Hierarchy of Effectiveness.** The five papers collectively map a rich design space of multi-agent coordination architectures, and their combined evidence converges on a clear finding: the optimal architecture is task-contingent, but hierarchical and structured designs consistently outperform both fully centralized and fully decentralized alternatives. Paper 3's systematic comparison of centralize",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_b",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated status_broadcasts",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_c",
+      "receiver": "__broadcast__",
+      "performative": "inform",
+      "content": "# Failure Modes, Limitations, and Open Challenges: A Unified Analysis\n\n## 1. Integrating Failure Taxonomies with Empirical Degradation Evidence\n\nPaper 1 (Cemri et al.) provides the most systematic taxonomy of multi-agent failure modes, identifying 14 distinct failure types organized across three levels: **intra-agent** (failures within individual agents, such as premature task termination, ignoring instructions, or wrong action selection), **inter-agent** (failures in agent-to-agent coordination",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_c",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated status_broadcasts",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated commitments",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_c",
+      "receiver": "__broadcast__",
+      "performative": "inform",
+      "content": "# Failure Modes, Limitations, and Open Challenges: A Unified Analysis\n\n## 1. Integrating Failure Taxonomies with Empirical Degradation Evidence\n\nPaper 1 (Cemri et al.) provides the most systematic taxonomy of multi-agent failure modes, identifying 14 distinct failure types organized across three levels: **intra-agent** (failures within individual agents, such as premature task termination, ignoring instructions, or wrong action selection), **inter-agent** (failures in agent-to-agent coordination",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_c",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated status_broadcasts",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated commitments",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_c",
+      "receiver": "__broadcast__",
+      "performative": "inform",
+      "content": "# Failure Modes, Limitations, and Open Challenges: A Unified Analysis\n\n## 1. Integrating Failure Taxonomies with Empirical Degradation Evidence\n\nPaper 1 (Cemri et al.) provides the most systematic taxonomy of multi-agent failure modes, identifying 14 distinct failure types organized across three levels: **intra-agent** (failures within individual agents, such as premature task termination, ignoring instructions, or wrong action selection), **inter-agent** (failures in agent-to-agent coordination",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_c",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated status_broadcasts",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated commitments",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_c",
+      "receiver": "__broadcast__",
+      "performative": "inform",
+      "content": "# Failure Modes, Limitations, and Open Challenges: A Unified Analysis\n\n## 1. Integrating Failure Taxonomies with Empirical Degradation Evidence\n\nPaper 1 (Cemri et al.) provides the most systematic taxonomy of multi-agent failure modes, identifying 14 distinct failure types organized across three levels: **intra-agent** (failures within individual agents, such as premature task termination, ignoring instructions, or wrong action selection), **inter-agent** (failures in agent-to-agent coordination",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_c",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated status_broadcasts",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated commitments",
+      "token_count": 0
+    }
+  ]
+}

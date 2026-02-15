@@ -1,0 +1,163 @@
+{
+  "experiment_id": "3629827e",
+  "pattern": "blackboard_v2",
+  "benchmark": "research_synthesis",
+  "model": "claude-opus-4-6",
+  "num_agents": 3,
+  "num_rounds": 4,
+  "total_tokens": 12079,
+  "wall_time_seconds": 123.38241314888,
+  "quality_score": 88.0,
+  "token_efficiency": 7.285371305571654,
+  "final_output": "# Synthesis: The State of Multi-Agent LLM Systems in 2025\n\n## Central Thesis\n\nMulti-agent LLM systems are not general-purpose amplifiers of capability. They are **conditional architectural choices** whose value depends on the interaction of three factors: task structure, coordination mechanism, and resource allocation strategy. The field's central question must shift from *\"how many agents?\"* to *\"what coordination architecture for what task, at what cost?\"*\n\nThis synthesis integrates findings from five papers spanning empirical scaling studies (Kim et al.), failure analysis (Cemri et al.), architectural innovation (LbMAS), production system design (Anthropic), and a comprehensive survey of 47 systems (Tran et al.).\n\n---\n\n## 1. The Core Finding: Coordination Cost Dominates\n\nThe strongest consensus across all five papers is that **unmanaged coordination overhead frequently exceeds the benefits of agent specialization**. The evidence is mutually reinforcing:\n\n- **36.9% of all multi-agent failures** stem from inter-agent misalignment \u2014 not from individual agent incapacity but from the coordination layer itself (Cemri et al.). These systems fail *even when individual agents can solve the task alone*, meaning multi-agent structure actively introduces failure modes absent in single-agent settings.\n- **17.2x error amplification** occurs with independent (uncoordinated) agents (Kim et al.). This is not linear error accumulation but multiplicative \u2014 consistent with reliability engineering, where a system of *n* independent components each with reliability *r* yields system reliability *r^n*, degrading exponentially.\n- **80% of performance variance** is explained by token budget, not agent count (Anthropic). This is perhaps the most disruptive finding: much of the reported benefit of multi-agent systems in the literature may be a confound, where multi-agent systems simply consume more total tokens, and it is the compute doing the work, not the multi-agent structure.\n\n**Implication:** The burden of proof should fall on multi-agent designs to demonstrate that their coordination benefits exceed their coordination costs, relative to a single agent given equivalent resources.\n\n---\n\n## 2. When Multi-Agent Systems Work \u2014 and When They Don't\n\n### Task decomposability as the primary predictor\n\nKim et al.'s finding that **task decomposability predicts optimal architecture with 87% accuracy** is the most actionable result across all five papers. The empirical picture:\n\n| Task Type | Multi-Agent Effect | Best Architecture |\n|---|---|---|\n| **Parallelizable** | +80.9% improvement (Kim et al.) | Shared-state / blackboard (LbMAS) |\n| **Hierarchically decomposable** | +90.2% on complex research (Anthropic) | Orchestrator-worker with structured communication |\n| **Sequential / non-decomposable** | \u221239\u201370% degradation (Kim et al.) | Single agent with extended token budget |\n\nThis maps onto Frederick Brooks's classic distinction between partitionable, unpartitionable, and surgically partitionable tasks \u2014 the multi-agent analog of Brooks's Law is now empirically confirmed for LLM systems.\n\n### The 45% capability threshold\n\nKim et al. identify a phase transition: beyond 45% individual agent capability, adding more agents hurts performance. Below this threshold, agents are too weak to contribute meaningfully; above it, they are strong enough that coordination overhead dominates marginal gains. This mirrors the Ringelmann effect in social psychology and has a direct practical consequence: **as foundation models improve, the optimal number of agents for a given task decreases**.\n\n### The diversity caveat\n\nLbMAS's finding that **quality correlates with knowledge diversity, not source quantity** adds an important qualification. The value of multi-agent systems may lie less in parallel compute and more in **epistemic diversity** \u2014 bringing genuinely different knowledge or reasoning strategies to bear. This is consistent with ensemble learning theory, where bagging works only when component errors are uncorrelated.\n\n---\n\n## 3. Architecture Matters: A Taxonomy of What Works\n\n### Structured communication beats free-form interaction\n\nThree independent lines of evidence converge:\n- Structured protocols outperform free-form dialogue by **23%** on average (Tran et al., survey of 47 systems)\n- Structured critique (generator/critic) outperforms unstructured multi-agent debate (Anthropic)\n- Blackboard architecture achieves **13\u201357% improvement** over supervisor patterns on knowledge-intensive tasks with **3x fewer tokens** (LbMAS)\n\nThe mechanism is clear: constraining communication channels reduces the combinatorial explosion of possible interactions, filters noise, and forces agents to communicate through well-defined interfaces rather than ambiguous natural language.\n\n### Three coordination paradigms and their tradeoffs\n\nThe papers collectively reveal three dominant architectures, each occupying a different point in a tradeoff space analogous to the CAP theorem in distributed systems:\n\n| Architecture | Coherence | Parallelism | Token Efficiency | Best For |\n|---|---|---|---|---|\n| **Centralized/Orchestrator** (Papers 2, 3, 4) | High | Low | Medium | Complex tasks requiring coherent output |\n| **Blackboard/Shared-state** (Paper 5) | High | High | High (3x savings) | Knowledge-intensive tasks with diverse sources |\n| **Independent/Decentralized** (Paper 2) | Low | High | Low | Only viable for embarrassingly parallel tasks |\n\n**Resolving the centralized vs. blackboard tension:** The analyst identified an apparent contradiction \u2014 Papers 2, 3, and 4 favor centralized/hierarchical coordination while Paper 5 argues against supervisor patterns. The resolution is that the blackboard is not opposed to centralization but rather **orthogonal** to it. The blackboard replaces *pairwise communication* with *shared state*, reducing O(n\u00b2) message complexity to O(n). A blackboard system can still have a coordinator that decides agent activation order. The real distinction is between **message-passing** and **shared-memory** paradigms, not between centralized and decentralized control.\n\n### The orchestrator-worker pattern deserves scrutiny\n\nAnthropic's 90.2% improvement with orchestrator-worker is impressive but warrants careful interpretation. A lead agent that maintains coherence, delegates sub-tasks, and synthesizes results is functionally closer to **a single agent with structured self-delegation and tool use** than to a true multi-agent system. This blurs the boundary between \"multi-agent\" and \"single agent with sophisticated prompting,\" reinforcing Paper 4's own finding that token budget, not agent count, is the dominant variable.\n\n---\n\n## 4. A Decision Framework for Practitioners\n\nIntegrating all five papers, the following decision process emerges \u2014 with important caveats:\n\n```\nStep 1: Assess task decomposability (87% predictive accuracy \u2014 Kim et al.)\n  \u251c\u2500\u2500 Non-decomposable \u2192 Single agent, maximize token budget\n  \u251c\u2500\u2500 Parallelizable \u2192 Multi-agent with shared state (blackboard)\n  \u2514\u2500\u2500 Hierarchically decomposable \u2192 Orchestrator-worker pattern\n  \nStep 2: Choose communication structure\n  \u2192 Always prefer structured protocols over free-form (23% avg. gain)\n  \u2192 Use generator/critic over unstructured debate\n  \nStep 3: Optimize resource allocation\n  \u2192 Prioritize token budget over agent count (80% of variance)\n  \u2192 Prioritize agent diversity over agent quantity\n  \u2192 Monitor for the 45% capability threshold\n  \nStep 4: Implement failure detection for known modes\n  \u2192 Inter-agent misalignment (36.9% of failures)\n  \u2192 Cascading errors from single-agent mistakes\n  \u2192 Incorrect task decomposition (the 13% miss rate)\n```\n\n**Critical caveat:** This framework assumes task decomposability is knowable a priori. But Cemri et al.'s failure analysis reveals that **incorrect task decomposition is itself a major failure mode**. The 13% error rate in decomposability assessment (the complement of Kim et al.'s 87% accuracy) can produce catastrophic failures. Robust systems need meta-level monitoring that detects when the decomposition itself has gone wrong.\n\n---\n\n## 5. The Token Budget Hypothesis and the Future of the Field\n\nPaper 4's finding that token budget explains 80% of performance variance poses a fundamental challenge to the multi-agent paradigm. If a single agent given equivalent tokens (via extended chain-of-thought, self-reflection loops, iterative refinement) can match multi-agent performance, then multi-agent systems are not a new paradigm but rather **one architecture among many for allocating inference-time compute**.\n\nThis connects to the broader trend of inference-time compute scaling: chain-of-thought, tree-of-thought, and self-consistency methods all increase tokens consumed by a single agent to improve performance. Multi-agent systems may be another point on this same curve.\n\nHowever, three factors may preserve the value of multi-agent architectures even under this hypothesis:\n1. **Epistemic diversity** (Paper 5) \u2014 different agents with different training, prompts, or tool access produce genuinely uncorrelated perspectives that a single agent cannot easily replicate through more tokens alone.\n2. **Latency through parallelism** (Paper 2) \u2014 for parallelizable tasks, multi-agent systems can reduce wall-clock time even if total token consumption is equivalent.\n3. **Modularity and maintainability** \u2014 engineering benefits of separation of concerns, even if not strictly necessary for performance.\n\n---\n\n## 6. Critical Gaps and Research Priorities\n\n1. **Failure recovery mechanisms** \u2014 Cemri et al. identify 14 failure modes but no paper systematically evaluates mitigation or recovery strategies. The field knows *what* goes wrong but not *what to do about it*.\n\n2. **Unified cost models** \u2014 Only LbMAS reports token efficiency. The field urgently needs a standard metric integrating tokens \u00d7 latency \u00d7 accuracy to enable fair architectural comparisons. Without this, the token budget confound identified by Anthropic cannot be properly controlled for.\n\n3. **Capability-architecture interaction mapping** \u2014 Paper 2's 45% threshold and Paper 4's token budget finding suggest that optimal architecture is a function of individual agent capability, but no paper maps this relationship systematically. As foundation models improve rapidly, today's optimal architecture may be suboptimal within months.\n\n4. **The decomposability assessment problem** \u2014 If 87% accuracy in predicting optimal architecture from task decomposability is achievable, building and validating robust decomposability classifiers is a high-value research target. The remaining 13% failure rate needs characterization.\n\n5. **Controlled single-agent baselines** \u2014 Future multi-agent papers must compare against single agents given equivalent total token budgets. Without this control, reported improvements may be artifacts of increased compute rather than architectural innovation.\n\n---\n\n## Conclusion\n\nThe 2025 literature on multi-agent LLM systems reveals a field transitioning from enthusiasm to empiricism. The collective evidence supports a nuanced position: multi-agent systems deliver substantial gains for decomposable tasks with structured coordination and diverse agents, but actively harm performance on non-decomposable tasks, with uncoordinated agents, or when coordination costs are not carefully managed. The most important emerging insight \u2014 that token budget may matter more than agent count \u2014 challenges the field to demonstrate that multi-agent architectures provide value *beyond* simply consuming more inference-time compute. The path forward requires rigorous cost-controlled comparisons, automated architecture selection based on task properties, and robust failure detection and recovery mechanisms.",
+  "agent_stats": {
+    "analyst": {
+      "role": "specialist",
+      "tokens_in": 841,
+      "tokens_out": 845,
+      "messages_sent": 2,
+      "messages_received": 0
+    },
+    "researcher": {
+      "role": "specialist",
+      "tokens_in": 1743,
+      "tokens_out": 1229,
+      "messages_sent": 2,
+      "messages_received": 0
+    },
+    "synthesizer": {
+      "role": "specialist",
+      "tokens_in": 3013,
+      "tokens_out": 2614,
+      "messages_sent": 2,
+      "messages_received": 0
+    }
+  },
+  "metadata": {
+    "control_shell": "llm_powered",
+    "summarization": true,
+    "llm_stats": {
+      "model": "claude-opus-4-6",
+      "total_calls": 7,
+      "total_tokens_in": 6952,
+      "total_tokens_out": 5127,
+      "total_tokens": 12079,
+      "total_latency_ms": 123380.62763214111,
+      "avg_latency_ms": 17625.80394744873
+    }
+  },
+  "messages": [
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated task",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated contributions",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated summary",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "analyst",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated contributions",
+      "token_count": 0
+    },
+    {
+      "sender": "analyst",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "## Analyst Contribution\n\n### Key Convergent Findings\n\n1. **More agents \u2260 better performance** \u2014 This is the single strongest consensus across all five papers. Paper 1 shows systems fail despite capable individual agents. Paper 2 quantifies the 45% capability threshold beyond which adding agents hurts. Paper 4 finds token budget explains 80% of variance, not agent count. Paper 5 finds quality correlates with knowledge diversity, not number of sources.\n\n2. **Coordination cost is the dominant bottl",
+      "token_count": 1686
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "researcher",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated contributions",
+      "token_count": 0
+    },
+    {
+      "sender": "researcher",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "## Researcher Contribution\n\n### Specific Quantitative Evidence from the Papers\n\n**Paper 1 (Cemri et al.)** \u2014 The three failure categories deserve precise enumeration:\n- **Intra-agent failures**: individual agent errors (e.g., hallucination, instruction non-compliance)\n- **Inter-agent failures**: 36.9% of all failures \u2014 includes misaligned goals, conflicting outputs, information loss during handoffs, and cascading errors where one agent's mistake propagates\n- **System-level failures**: architectu",
+      "token_count": 2972
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "synthesizer",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated contributions",
+      "token_count": 0
+    },
+    {
+      "sender": "synthesizer",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "# Synthesis: The State of Multi-Agent LLM Systems in 2025\n\n## Central Thesis\n\nMulti-agent LLM systems are not general-purpose amplifiers of capability. They are **conditional architectural choices** whose value depends on the interaction of three factors: task structure, coordination mechanism, and resource allocation strategy. The field's central question must shift from *\"how many agents?\"* to *\"what coordination architecture for what task, at what cost?\"*\n\nThis synthesis integrates findings f",
+      "token_count": 5627
+    },
+    {
+      "sender": "control_shell",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated summary",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "control_shell",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "STOP: The synthesizer has already produced a substantial output (11,793 chars) in round 3, building on analyst and researcher contributions. The current summary shows a well-developed synthesis with clear thematic convergence across papers. Four rounds of contributions have been made, and the board appears complete with sufficient depth and evidence integration. Further rounds would likely be redundant.",
+      "token_count": 0
+    }
+  ]
+}

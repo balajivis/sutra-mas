@@ -1,0 +1,402 @@
+[
+    {
+        "cluster_id": 0,
+        "label": "Shared Medium Coordination",
+        "description": "Blackboard architecture, shared workspace coordination, knowledge sources, control shell scheduling, incremental problem solving, Nii 1986, Hearsay-II, shared memory, shared context management, opportunistic reasoning, shared state in LLM agents, LangGraph shared state, Redis shared context, shared scratchpad, collaborative workspace, centralized knowledge store, shared artifact coordination, stigmergy, indirect communication, environment-mediated coordination, Grasse 1959, pheromone, document-driven coordination, MetaGPT SOPs, artifact-based coordination, shared artifacts, standard operating procedures, tuple spaces, Linda, environment as communication medium, trace-based coordination, shared document editing, collaborative writing, implicit coordination, emergent coordination through artifacts, workflow documents, shared logs, asynchronous coordination",
+        "paper_count": 1096,
+        "top_concepts": [
+            "blackboard architecture",
+            "knowledge sources (KS)",
+            "opportunistic reasoning",
+            "distributed commit / quorum-based commit (precursor to quorum consensus replication)",
+            "replication control for multiple-copy data",
+            "fault-tolerant distributed control (no single point of control)",
+            "consensus (Byzantine and crash-fault agreement as a coordination primitive)",
+            "synchronous vs asynchronous communication models",
+            "partial synchrony / bounded-delay models",
+            "asynchronous distributed system"
+        ],
+        "top_patterns": [
+            "hybrid",
+            "blackboard",
+            "hierarchical",
+            "none",
+            "peer"
+        ]
+    },
+    {
+        "cluster_id": 1,
+        "label": "Contract Net and Task Allocation",
+        "description": "Contract net protocol, task allocation, announce bid award, auction-based allocation, market-based coordination, Smith 1980, TRACONET, marginal cost bidding, task routing, agent dispatch, dynamic task assignment, CNET, combinatorial auctions, winner determination, LLM task routing, agent selection, capability-based dispatch, multi-agent task distribution, workload balancing, which agent handles which task, agent specialization routing",
+        "paper_count": 945,
+        "top_concepts": [
+            "coalition formation",
+            "task allocation",
+            "distributed optimization",
+            "task allocation / resource allocation",
+            "organizational structure (agents representing generators, loads, grid interface)",
+            "multiagent resource allocation (MARA)",
+            "social welfare measures (utilitarian, egalitarian, leximin, etc.)",
+            "preference representation languages (e.g., utility functions, combinatorial preferences, CP-nets, value functions)",
+            "contract net protocol (CNP)",
+            "distributed optimization and control in MAS"
+        ],
+        "top_patterns": [
+            "auction",
+            "none",
+            "contract_net",
+            "hybrid",
+            "hierarchical"
+        ]
+    },
+    {
+        "cluster_id": 2,
+        "label": "Organizational Design and Team Structures",
+        "description": "Organizational paradigms, hierarchies, holarchies, coalitions, teams, role-based organization, AGR model, MOISE, electronic institutions, Horling and Lesser 2004, Ferber and Gutknecht Aalaadin, organizational norms, agent roles, crew-based coordination, flat vs hierarchical topologies, scaling agent teams, CrewAI roles, agent team composition, role assignment, multi-agent team formation, organizational structure for LLM agents, supervisor worker topology, manager agent, team scaling",
+        "paper_count": 2167,
+        "top_concepts": [
+            "computational agency",
+            "agent autonomy",
+            "agent organizations / organizational structures",
+            "consensus protocols",
+            "leader\u2013follower coordination",
+            "graph-theoretic connectivity (directed/undirected graphs, spanning tree, rooted graph)",
+            "holonic systems (Koestler holons adapted to MAS)",
+            "organizational paradigms (holarchy, hierarchical MAS)",
+            "agent-oriented architecture / reference architecture",
+            "autonomous agents"
+        ],
+        "top_patterns": [
+            "hierarchical",
+            "hybrid",
+            "none",
+            "supervisor",
+            "peer"
+        ]
+    },
+    {
+        "cluster_id": 3,
+        "label": "Distributed Planning, Problem Solving, and Teamwork",
+        "description": "Distributed problem solving, partial global planning, GPGP, functionally accurate cooperative systems, FA/C, result sharing, Durfee and Lesser 1983, distributed planning, task decomposition, distributed constraint satisfaction, DCSP, DPOP, coordination mechanisms, dependency management, Malone and Crowston, multi-agent planning, collaborative problem solving, LLM agent planning, decompose and conquer, sub-task planning, hierarchical task decomposition, plan synthesis, plan merging, joint intentions, SharedPlans, mutual belief, commitment, Cohen and Levesque 1990, Grosz and Kraus 1996, Tambe STEAM, joint persistent goals, team plans, obligation to inform, collaborative plans, group plans, teamwork models, collective intentionality, joint activity, shared goals, commitment protocols, team coordination, consensus building, collective action, cooperative task completion",
+        "paper_count": 1798,
+        "top_concepts": [
+            "SharedPlans (Grosz & Kraus style collaborative plans)",
+            "joint intentions",
+            "team plans / group plans",
+            "distributed consensus (agreement problems in multi-agent systems)",
+            "synchronous/asynchronous update protocols (discrete-time linear protocols)",
+            "network topology and communication graph as organization structure",
+            "distributed consensus",
+            "agreement protocols",
+            "dynamic interaction graphs (time-varying topology)",
+            "asynchronous vs synchronous models"
+        ],
+        "top_patterns": [
+            "none",
+            "hybrid",
+            "hierarchical",
+            "peer",
+            "blackboard"
+        ]
+    },
+    {
+        "cluster_id": 4,
+        "label": "Agent Communication Languages and Protocols",
+        "description": "FIPA ACL, KQML, speech acts, performatives, agent communication language, inform request query propose, message passing, interaction protocols, communicative acts, semantic content, ontology, MCP model context protocol, A2A agent-to-agent protocol, agent interoperability, protocol standards, ANP, inter-agent communication, message format, message schema, agent-to-agent messaging, structured messages between agents, conversation protocols, dialogue protocols, typed messages, semantic messaging, agent API design, protocol specification, communication middleware",
+        "paper_count": 281,
+        "top_concepts": [
+            "agent communication languages (ACL)",
+            "speech acts / performatives",
+            "communication protocol",
+            "Agent Communication Languages (ACL)",
+            "speech-act based communication (e.g., inform, request)",
+            "KQML",
+            "speech-act based communication (e.g., KQML/FIPA-ACL style)",
+            "mentalistic semantics (beliefs, desires, intentions as message pre/postconditions)",
+            "interaction protocols",
+            "conversation policies"
+        ],
+        "top_patterns": [
+            "none",
+            "hybrid",
+            "peer",
+            "hierarchical",
+            "blackboard"
+        ]
+    },
+    {
+        "cluster_id": 5,
+        "label": "Argumentation and Structured Debate",
+        "description": "Argumentation frameworks, Dung 1995, abstract argumentation, structured debate, generator critic, attack support relations, persuasion dialogue, deliberation, multi-agent debate, argument-based negotiation, formal argumentation, LLM debate, can agents really debate, multi-agent discussion, agent disagreement resolution, critique and revision, self-critique, peer review by agents, adversarial collaboration, dialectical reasoning, pro and con analysis, quality improvement through debate, verification through argument",
+        "paper_count": 388,
+        "top_concepts": [
+            "argumentation-based negotiation",
+            "persuasion dialogue",
+            "dialogue games",
+            "argumentation frameworks (Dung-style abstract argumentation, emergent at the time)",
+            "negotiation protocols",
+            "argumentation frameworks (Dung AFs)",
+            "negotiation (multi-agent negotiation protocols)",
+            "conflict resolution between agents",
+            "role-based agent decomposition (specialized agents for routing, synthesis, fact extraction, intent modeling, auditing)",
+            "hierarchical multi-agent architecture (pipeline of stages with dependencies)"
+        ],
+        "top_patterns": [
+            "debate",
+            "none",
+            "hybrid",
+            "peer",
+            "hierarchical"
+        ]
+    },
+    {
+        "cluster_id": 6,
+        "label": "Negotiation, Game Theory, and Economic Paradigms",
+        "description": "Automated negotiation, game theory, mechanism design, Nash equilibrium, social welfare, VCG, bargaining, Rosenschein and Zlotkin, cooperative games, non-cooperative games, strategic interaction, utility maximization, Pareto optimality, agent-mediated negotiation, preference elicitation, social choice, resource allocation, competitive agents, incentive design, agent economics, pricing mechanisms, market mechanisms, strategic agents, rational agents, payoff optimization, coalition formation, coalition value, Shapley value, core allocation, stable coalition, coalition structure generation",
+        "paper_count": 1167,
+        "top_concepts": [
+            "consensus protocols in multi-agent systems",
+            "networked dynamical systems / graph-based MAS",
+            "Laplacian-based consensus (continuous-time and/or discrete-time)",
+            "automated negotiation",
+            "negotiation protocol",
+            "utility function / preference modeling",
+            "negotiation protocols",
+            "strategic agents / self-interested agents",
+            "mechanism design",
+            "distributed systems with self-interested agents"
+        ],
+        "top_patterns": [
+            "none",
+            "auction",
+            "hybrid",
+            "peer",
+            "hierarchical"
+        ]
+    },
+    {
+        "cluster_id": 7,
+        "label": "BDI and Cognitive Agent Architectures",
+        "description": "BDI architecture, beliefs desires intentions, Rao and Georgeff 1995, AgentSpeak, Jason, 2APL, JACK, Jadex, cognitive agents, deliberative agents, practical reasoning, means-end reasoning, plan library, goal management, intention reconsideration, reactive vs deliberative, hybrid architectures, InteRRaP, subsumption, cognitive architecture for LLM agents, agent reasoning, agent internal state, mental models, agent beliefs, goal-directed behavior, autonomous reasoning, agent decision making, reflection and introspection",
+        "paper_count": 1970,
+        "top_concepts": [
+            "intention (Cohen & Levesque, Bratman-style}",
+            "commitment (social and mental attitudes in agents)",
+            "choice / decision-theoretic action selection",
+            "agent = autonomous, situated, persistent software entity",
+            "reactive vs deliberative agents",
+            "social ability / communication (precursor to FIPA ACL concerns)",
+            "intentional stance (agents as intentional systems)",
+            "BDI (Belief-Desire-Intention) model",
+            "agent architectures (deliberative vs. reactive vs. hybrid)",
+            "distributed problem solving"
+        ],
+        "top_patterns": [
+            "none",
+            "hierarchical",
+            "hybrid",
+            "bdi",
+            "supervisor"
+        ]
+    },
+    {
+        "cluster_id": 8,
+        "label": "Human-Agent Interaction and HITL",
+        "description": "Human-agent interaction, human-in-the-loop, mixed initiative, adjustable autonomy, human-agent teaming, supervisory control, shared authority, trust calibration, transparency, explainability, human oversight, approval workflows, escalation, human as agent peer, co-intelligence, human-AI collaboration, interactive AI, user feedback, agent alignment, human preferences, human evaluation of agents, conversational agents, chatbot interaction, dialogue systems, user intent, natural language interface, assistant agents",
+        "paper_count": 337,
+        "top_concepts": [
+            "joint activity / joint intention theory (Cohen & Levesque, Bratman)",
+            "common ground / mutual belief",
+            "teamwork models (e.g., SharedPlans, joint intentions)",
+            "human\u2013agent teaming (mixed-initiative interaction)",
+            "decision support agent / recommender agent",
+            "multi\u2011agent coordination for heterogeneous robots (multi\u2011UxV management)",
+            "interface agents",
+            "user modeling / user profiles",
+            "cooperative multi-agent systems",
+            "human\u2013agent teamwork"
+        ],
+        "top_patterns": [
+            "none",
+            "hybrid",
+            "hierarchical",
+            "supervisor",
+            "blackboard"
+        ]
+    },
+    {
+        "cluster_id": 9,
+        "label": "Trust, Reputation, and Norms",
+        "description": "Trust models, reputation systems, computational trust, social norms, normative multi-agent systems, sanctions, institutional norms, social laws, governance, witness reputation, direct trust, certified reputation, norm enforcement, norm emergence, social control, ethical agents, responsible AI, agent safety, guardrails, content filtering, alignment, agent reliability, trustworthy agents",
+        "paper_count": 658,
+        "top_concepts": [
+            "reputation systems",
+            "trust models",
+            "social choice / social evaluation",
+            "witness reputation",
+            "trust and reputation models in MAS",
+            "cognitive agent models (precursors/relatives of BDI)",
+            "normative multi-agent systems (norms, institutions, roles)",
+            "trust models in MAS",
+            "testimony-based reputation (witness-based trust)",
+            "open multi-agent systems"
+        ],
+        "top_patterns": [
+            "none",
+            "hybrid",
+            "peer",
+            "hierarchical",
+            "supervisor"
+        ]
+    },
+    {
+        "cluster_id": 10,
+        "label": "Multi-Agent Engineering: Methodologies, Frameworks, and Platforms",
+        "description": "Agent-oriented software engineering, AOSE, Prometheus methodology, GAIA methodology, Tropos, MaSE, agent platforms, JADE, FIPA compliance, Jennings 2000 on agent-based SE, agent above object, formal verification of MAS, model checking, testing agents, agent development tools, agent programming languages, software agents, agent middleware, agent infrastructure, agent deployment, agent lifecycle, agent management, multi-agent platform, agent runtime, agent SDK, LLM agent framework, LangGraph, CrewAI, AutoGen, MetaGPT, ChatDev, agentic AI framework, agent orchestration framework, multi-agent LLM system design, agent builder platform, tool use framework, function calling infrastructure, agent hosting, prompt chaining, agent pipeline, workflow engine for agents",
+        "paper_count": 2411,
+        "top_concepts": [
+            "autonomous agents",
+            "multi-agent systems (MAS)",
+            "cooperative vs self-interested agents",
+            "FIPA-compliant agent platforms",
+            "FIPA ACL (Agent Communication Language)",
+            "FIPA agent management / infrastructure (AMS, DF, MTS)",
+            "organizational modeling (roles, permissions, responsibilities, protocols)",
+            "agent-oriented software engineering (AOSE)",
+            "roles and role models",
+            "agent typologies (e.g., interface agents, information agents, reactive agents, deliberative agents, mobile agents, etc.)"
+        ],
+        "top_patterns": [
+            "none",
+            "hierarchical",
+            "hybrid",
+            "supervisor",
+            "blackboard"
+        ]
+    },
+    {
+        "cluster_id": 11,
+        "label": "Multi-Agent Robotics and Embodied Teams",
+        "description": "Multi-robot systems, robotic teams, robot coordination, formation control, multi-robot task allocation MRTA, robot swarms, distributed robotics, RoboCup, sensor networks, embodied agents, physical coordination, multi-UAV, multi-UGV, cooperative robotics, robot communication, spatial coordination, flocking, consensus in networks, distributed control, multi-vehicle coordination, autonomous vehicles",
+        "paper_count": 929,
+        "top_concepts": [
+            "distributed consensus (agreement protocols in MAS and distributed control)",
+            "algebraic graph theory for multi-agent coordination (Laplacian spectra, connectivity)",
+            "formation control and flocking as cooperative control problems",
+            "distributed consensus (agreement in multi-agent networks)",
+            "flocking / swarming (behavioral MAS, Reynolds-style)",
+            "nearest-neighbor coordination / local interaction rules",
+            "consensus (agreement protocols in MAS)",
+            "synchronization of dynamical agents / complex networks",
+            "graph-theoretic communication topology (directed graphs, spanning tree)",
+            "distributed consensus"
+        ],
+        "top_patterns": [
+            "none",
+            "hybrid",
+            "hierarchical",
+            "peer",
+            "stigmergy"
+        ]
+    },
+    {
+        "cluster_id": 12,
+        "label": "Evaluation Benchmarks and Failure Analysis",
+        "description": "Agent evaluation, failure analysis, benchmarking, failure modes of multi-agent systems, Cemri et al 14 failure modes, scaling agent systems, Kim et al Google DeepMind, error amplification, agent safety, reliability, GAIA benchmark, SWE-bench, HumanEval, multi-agent evaluation metrics, coordination overhead, token efficiency, cost analysis, agent observability, agent performance measurement, quality assessment, error rates, success rates, agent comparison studies",
+        "paper_count": 955,
+        "top_concepts": [
+            "continuous-time consensus protocols",
+            "average consensus",
+            "double-integrator agent dynamics",
+            "decentralized control (distributed evaluators instead of a single judge)",
+            "multi-agent collaboration / societies of agents",
+            "role specialization (different agents with distinct responsibilities)",
+            "closed-loop control (sense\u2013plan\u2013act cycle via repo inspection, editing, execution feedback)",
+            "tool-based agency (agents as tool-using problem solvers in an environment)",
+            "task environment specification (well-defined environment, goals, and success criteria)",
+            "blackboard architecture (workspace / eval-space / Docker sandbox as shared state and artifact store)"
+        ],
+        "top_patterns": [
+            "none",
+            "hierarchical",
+            "hybrid",
+            "supervisor",
+            "generator_critic"
+        ]
+    },
+    {
+        "cluster_id": 13,
+        "label": "Memory and Context Management",
+        "description": "Agent memory, memory architecture, episodic memory, working memory, long-term memory, short-term memory, memory retrieval, cross-session context, conversation memory, entity memory, MemGPT, memory-augmented agents, context window management, knowledge retention, experience replay, memory consolidation, retrieval augmented generation, RAG, vector memory, memory sharing between agents, collective memory, organizational memory, corporate memory, institutional memory, context carryover, state persistence, agent state management, memory-based reasoning, recall and recognition in agents",
+        "paper_count": 107,
+        "top_concepts": [
+            "semantic memory (knowledge-oriented memory in agents)",
+            "working memory vs long-term memory (agent memory hierarchy)",
+            "tool-using agents / agent-environment interaction",
+            "hierarchical blackboard (multi-level shared memory: raw text, facts, episodic summaries)",
+            "role-based organizational structure (specialized agents: Constructor, Retriever, Judge, Refresher)",
+            "mediated interaction via shared state (agents coordinate only through memory, not direct messaging)",
+            "episodic memory (agent memory models)",
+            "state summarization / belief state compression",
+            "partially observable environments (POMDP framing of limited context)",
+            "agent internal state = memory (belief/state representation)"
+        ],
+        "top_patterns": [
+            "none",
+            "blackboard",
+            "hierarchical",
+            "hybrid",
+            "generator_critic"
+        ]
+    },
+    {
+        "cluster_id": 14,
+        "label": "Learning and Adaptation",
+        "description": "Multi-agent reinforcement learning, MARL, cooperative learning, independent learners, joint action learning, opponent modeling, self-play, emergent communication, learned coordination, Markov games, stochastic games, Dec-POMDP, policy gradient multi-agent, QMIX, MAPPO, MADDPG, curriculum learning for agents, transfer learning agents, adaptive agents, online learning, continual learning, co-evolution, evolutionary multi-agent systems, learning to communicate, emergent language, reward shaping, intrinsic motivation, credit assignment in teams, swarm intelligence, ant colony optimization, particle swarm optimization",
+        "paper_count": 2386,
+        "top_concepts": [
+            "consensus / agreement algorithms in MAS",
+            "distributed averaging / gossip protocols",
+            "synchronization in multi-agent systems",
+            "multiagent reinforcement learning (MARL)",
+            "stochastic/Markov games",
+            "fully-cooperative vs fully-competitive vs general-sum settings",
+            "distributed consensus (average consensus over networks)",
+            "time-varying communication graphs",
+            "stochastic and doubly-stochastic weight matrices",
+            "team learning"
+        ],
+        "top_patterns": [
+            "none",
+            "hybrid",
+            "hierarchical",
+            "peer",
+            "supervisor"
+        ]
+    },
+    {
+        "cluster_id": 15,
+        "label": "Modeling and Simulating Artificial Societies",
+        "description": "Agent-based modeling, agent-based simulation, artificial societies, social simulation, MABS, computational social science, Epstein and Axtell Sugarscape, Growing Artificial Societies, Schelling segregation model, opinion dynamics, generative agents, simulated social behavior, agent-based computational economics, ACE, emergent social phenomena, social influence, contagion, population dynamics, evolutionary dynamics, ODD protocol, individual-based model, virtual society, digital twin society, social dilemma simulation, cooperation evolution, artificial life, complex adaptive systems",
+        "paper_count": 374,
+        "top_concepts": [
+            "multi-agent interaction modeling (influence between agents)",
+            "joint state space over multiple agents",
+            "coupled / joint policy or joint intention modeling",
+            "agent-based modeling (ABM)",
+            "multi-agent simulation",
+            "autonomous agents",
+            "multi-agent system (MAS) as distinct from single-agent systems",
+            "agent societies / societies of agents",
+            "open vs closed environments",
+            "organizational modeling (roles, groups, social structures)"
+        ],
+        "top_patterns": [
+            "none",
+            "hybrid",
+            "hierarchical",
+            "peer",
+            "blackboard"
+        ]
+    }
+]

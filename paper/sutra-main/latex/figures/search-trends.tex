@@ -1,0 +1,126 @@
+% Figure: The Attention Gap — Google Trends for agent terminology (2004-2026)
+% For inclusion in Section 1 (Introduction) of sutra-main paper
+% Data source: Google Trends, quarterly averages
+%
+% Usage: \input{figures/search-trends.tex}
+
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=\textwidth,
+    height=7.5cm,
+    xlabel={Year},
+    ylabel={Google Trends Interest (0--100)},
+    xmin=2004, xmax=2026.25,
+    ymin=-3, ymax=108,
+    xtick={2004,2006,2008,2010,2012,2014,2016,2018,2020,2022,2024,2026},
+    xticklabel style={font=\small},
+    yticklabel style={font=\small},
+    xlabel style={font=\small},
+    ylabel style={font=\small},
+    legend style={
+        at={(0.02,0.98)},
+        anchor=north west,
+        font=\small,
+        draw=black!30,
+        fill=white,
+        fill opacity=0.9,
+        text opacity=1,
+        cells={anchor=west},
+    },
+    grid=major,
+    grid style={gray!20},
+    clip=false,
+    % Era shading
+    extra x ticks={},
+]
+
+% ── The Dead Zone shading (2013-2022) ──────────────────────
+\fill[black!5] (axis cs:2012.5,-3) rectangle (axis cs:2022.5,108);
+\node[font=\footnotesize\itshape, text=black!40, rotate=90]
+    at (axis cs:2017.5,50) {The Attention Gap};
+
+% ── Key event markers ─────────────────────────────────────
+% AlexNet
+\draw[black!40, dashed, thin] (axis cs:2012,0) -- (axis cs:2012,105);
+\node[font=\tiny, text=black!50, anchor=south, rotate=45]
+    at (axis cs:2012,105) {AlexNet};
+
+% Transformers
+\draw[black!40, dashed, thin] (axis cs:2017,0) -- (axis cs:2017,105);
+\node[font=\tiny, text=black!50, anchor=south, rotate=45]
+    at (axis cs:2017,105) {Transformers};
+
+% GPT-3
+\draw[black!40, dashed, thin] (axis cs:2020,0) -- (axis cs:2020,105);
+\node[font=\tiny, text=black!50, anchor=south, rotate=45]
+    at (axis cs:2020,105) {GPT-3};
+
+% GPT-4 / AutoGen
+\draw[black!40, dashed, thin] (axis cs:2023.25,0) -- (axis cs:2023.25,105);
+\node[font=\tiny, text=black!50, anchor=south, rotate=45]
+    at (axis cs:2023.25,105) {GPT-4};
+
+% ── Data series ────────────────────────────────────────────
+% "Intelligent agent" — the dominant new term (area fill + line)
+\addplot[
+    color=blue!70!black,
+    fill=blue!10,
+    thick,
+    smooth,
+    mark=none,
+] table[x index=0, y index=3] {figures/search-trends.dat}
+    \closedcycle;
+
+% "Agentic AI" — the new buzzword
+\addplot[
+    color=red!70!black,
+    fill=red!10,
+    thick,
+    smooth,
+    mark=none,
+] table[x index=0, y index=2] {figures/search-trends.dat}
+    \closedcycle;
+
+% "Multi-agent system" — the classical term
+\addplot[
+    color=black!70!green,
+    fill=green!8,
+    thick,
+    smooth,
+    mark=none,
+] table[x index=0, y index=1] {figures/search-trends.dat}
+    \closedcycle;
+
+\legend{
+    ``Intelligent agent'',
+    ``Agentic AI'',
+    ``Multi-agent system''
+}
+
+% ── Peak annotation ────────────────────────────────────────
+\node[font=\tiny, anchor=south west, text=blue!70!black]
+    at (axis cs:2025.3,88) {100 (Oct 2025)};
+
+% ── Classical era label ────────────────────────────────────
+\draw[decorate, decoration={brace, amplitude=4pt, mirror},
+      black!50, thick]
+    (axis cs:2004,-2) -- (axis cs:2006,-2)
+    node[midway, below=5pt, font=\tiny, text=black!50]
+    {Classical MAS};
+
+\end{axis}
+\end{tikzpicture}
+\caption{\textbf{The Attention Gap.} Google Trends search interest
+(2004--2026) for three agent-related terms. ``Multi-agent system''
+(the classical terminology) peaked at 3--4 in 2004 and flatlined near
+zero by 2012. ``Intelligent agent'' and ``Agentic AI'' (new terminology)
+exploded starting Q4 2024, reaching 100 by October 2025. The shaded
+region marks the Attention Gap (2013--2022): a decade where agent research
+effectively disappeared from public discourse. The new wave of interest
+uses different terminology than the classical research it unknowingly
+reinvents---the terminological disconnect that motivates this survey.
+Data source: Google Trends, quarterly averages.}
+\label{fig:trends}
+\end{figure*}

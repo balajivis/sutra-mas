@@ -1,0 +1,163 @@
+{
+  "experiment_id": "36eee0bb",
+  "pattern": "blackboard_v2",
+  "benchmark": "planning",
+  "model": "claude-opus-4-6",
+  "num_agents": 3,
+  "num_rounds": 4,
+  "total_tokens": 15237,
+  "wall_time_seconds": 177.51201677322388,
+  "quality_score": 72.0,
+  "token_efficiency": 4.725339633786178,
+  "final_output": "\n\n# Multi-Tenant RAG SaaS Application \u2014 Comprehensive Development Plan\n\n## 1. Executive Summary\n\nThis plan delivers a document intelligence SaaS platform where tenants upload documents (PDF, DOCX), receive AI-generated summaries, and ask natural-language questions answered via Retrieval-Augmented Generation. The system serves 100 tenants, 1,000 users, and up to 1M total documents on AWS using Python, React, and PostgreSQL.\n\nThe architecture comprises three bounded contexts \u2014 **(1) Multi-tenant CRUD application**, **(2) Async document processing pipeline**, and **(3) RAG inference layer** \u2014 connected through clean interfaces. This separation maps directly to team assignments and enables independent scaling.\n\n---\n\n## 2. Architecture Overview\n\n```\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                          REACT FRONTEND                             \u2502\n\u2502              (S3 + CloudFront, Cognito Auth)                        \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                           \u2502 HTTPS (ALB)\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                     API LAYER (ECS Fargate)                         \u2502\n\u2502              FastAPI \u00b7 JWT Validation \u00b7 Tenant Context               \u2502\n\u2502                                                                     \u2502\n\u2502  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510 \u2502\n\u2502  \u2502  Tenant/User  \u2502  \u2502  Document Mgmt    \u2502  \u2502  RAG Query Engine    \u2502 \u2502\n\u2502  \u2502  CRUD APIs    \u2502  \u2502  Upload \u2192 S3 \u2192SQS \u2502  \u2502  Retrieve + Generate \u2502 \u2502\n\u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518 \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n       \u2502                      \u2502                      \u2502\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                    POSTGRESQL (RDS) + pgvector                      \u2502\n\u2502         Shared schema \u00b7 RLS enforcement \u00b7 List-partitioned          \u2502\n\u2502         vector tables by tenant_id (100 partitions)                 \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n       \u2502\n       \u2502  S3 Event Notification\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                 DOCUMENT PROCESSING PIPELINE                       \u2502\n\u2502                                                                    \u2502\n\u2502  S3 Upload \u2500\u2500\u25b6 SQS Queue \u2500\u2500\u25b6 Celery Workers (ECS Fargate)        \u2502\n\u2502                                    \u2502                               \u2502\n\u2502                          \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510                   \u2502\n\u2502                          \u2502 1. Extract text     \u2502                   \u2502\n\u2502                          \u2502 2. Chunk (512 tok)  \u2502                   \u2502\n\u2502                          \u2502 3. Embed (Titan V2) \u2502                   \u2502\n\u2502                          \u2502 4. Store in pgvector\u2502                   \u2502\n\u2502                          \u2502 5. Update status    \u2502                   \u2502\n\u2502                          \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518                   \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n```\n\n---\n\n## 3. Technology Stack \u2014 Definitive Choices\n\n| Layer | Technology | Rationale |\n|-------|-----------|-----------|\n| **Frontend** | React + TypeScript, Vite, TanStack Query | Standard; hosted on S3 + CloudFront |\n| **API** | FastAPI (Python 3.12) | Async support, auto-generated OpenAPI docs, excellent for ML workloads |\n| **Auth** | Amazon Cognito + JWT | User pools per tenant, RBAC via custom claims, SAML/SSO ready for full product |\n| **Database** | PostgreSQL 16 on RDS (`r6g.xlarge`) + pgvector 0.7 | Shared schema, RLS, list-partitioned vector tables |\n| **Object Storage** | S3 (one bucket, tenant-prefixed keys) | `s3://docs-bucket/{tenant_id}/{doc_id}/original.*` |\n| **Task Queue** | Celery + SQS as broker | SQS eliminates Redis/RabbitMQ management; Celery provides retry, monitoring |\n| **Workers** | ECS Fargate (auto-scaled task definitions) | No servers to manage; scale to zero when idle |\n| **Embeddings** | Amazon Titan Embeddings V2 (Bedrock) \u2014 1024 dims | Data stays in AWS, no RPM limits, $0.02/1M tokens, comparable quality to OpenAI |\n| **LLM (MVP)** | Claude 3 Haiku via Bedrock | $0.25/$1.25 per 1M tokens, ~400ms TTFT, sufficient for summaries + single-doc Q&A |\n| **LLM (Full)** | Claude 3.5 Sonnet via Bedrock | Upgraded for cross-document reasoning; same SDK, just a model ID change |\n| **Text Extraction** | PyMuPDF (PDF) + python-docx (DOCX) | Handles 90%+ of business documents; `unstructured.io` added in full product |\n| **IaC** | Terraform + AWS CDK for ECS | DevOps engineer's primary tool |\n| **CI/CD** | GitHub Actions \u2192 ECR \u2192 ECS | Simple, well-documented |\n| **Monitoring** | CloudWatch + Sentry (errors) + basic custom dashboard | Cost-effective for MVP |\n\n---\n\n## 4. Database Design\n\n### 4.1 Core Schema\n\n```sql\n-- Extensions\nCREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";\nCREATE EXTENSION IF NOT EXISTS \"vector\";\n\n-- Tenants\nCREATE TABLE tenants (\n    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    name VARCHAR(255) NOT NULL,\n    slug VARCHAR(63) UNIQUE NOT NULL,\n    plan VARCHAR(50) DEFAULT 'standard',\n    settings JSONB DEFAULT '{}',\n    created_at TIMESTAMPTZ DEFAULT NOW(),\n    updated_at TIMESTAMPTZ DEFAULT NOW()\n);\n\n-- Users\nCREATE TABLE users (\n    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL REFERENCES tenants(id),\n    email VARCHAR(255) NOT NULL,\n    cognito_sub VARCHAR(255) UNIQUE NOT NULL,\n    role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'editor', 'viewer')),\n    is_active BOOLEAN DEFAULT TRUE,\n    created_at TIMESTAMPTZ DEFAULT NOW(),\n    UNIQUE(tenant_id, email)\n);\n\n-- Documents\nCREATE TABLE documents (\n    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL REFERENCES tenants(id),\n    uploaded_by UUID NOT NULL REFERENCES users(id),\n    filename VARCHAR(500) NOT NULL,\n    file_type VARCHAR(10) NOT NULL CHECK (file_type IN ('pdf', 'docx')),\n    file_size_bytes BIGINT NOT NULL,\n    s3_key VARCHAR(1000) NOT NULL,\n    status VARCHAR(20) DEFAULT 'uploaded' \n        CHECK (status IN ('uploaded', 'processing', 'ready', 'failed')),\n    page_count INTEGER,\n    summary TEXT,\n    error_message TEXT,\n    metadata JSONB DEFAULT '{}',\n    created_at TIMESTAMPTZ DEFAULT NOW(),\n    updated_at TIMESTAMPTZ DEFAULT NOW()\n);\n\nCREATE INDEX idx_documents_tenant_status ON documents(tenant_id, status);\nCREATE INDEX idx_documents_tenant_created ON documents(tenant_id, created_at DESC);\n\n-- Document Chunks (LIST-PARTITIONED by tenant_id for vector performance)\nCREATE TABLE document_chunks (\n    id UUID DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL,\n    document_id UUID NOT NULL,\n    chunk_index INTEGER NOT NULL,\n    content TEXT NOT NULL,\n    parent_content TEXT,  -- larger surrounding context (2048 tokens) for parent-child retrieval\n    token_count INTEGER NOT NULL,\n    embedding vector(1024) NOT NULL,  -- Titan V2 dimensions\n    metadata JSONB DEFAULT '{}',\n    created_at TIMESTAMPTZ DEFAULT NOW(),\n    PRIMARY KEY (tenant_id, id)\n) PARTITION BY LIST (tenant_id);\n\n-- Partitions created dynamically when tenant is provisioned:\n-- CREATE TABLE document_chunks_tenant_{slug} PARTITION OF document_chunks\n--     FOR VALUES IN ('{tenant_uuid}');\n-- CREATE INDEX ON document_chunks_tenant_{slug} \n--     USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);\n\n-- Conversations (Q&A history)\nCREATE TABLE conversations (\n    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL REFERENCES tenants(id),\n    user_id UUID NOT NULL REFERENCES users(id),\n    document_id UUID REFERENCES documents(id),  -- NULL = cross-doc (full product)\n    title VARCHAR(500),\n    created_at TIMESTAMPTZ DEFAULT NOW()\n);\n\nCREATE TABLE messages (\n    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL,\n    conversation_id UUID NOT NULL REFERENCES conversations(id),\n    role VARCHAR(10) NOT NULL CHECK (role IN ('user', 'assistant')),\n    content TEXT NOT NULL,\n    sources JSONB DEFAULT '[]',  -- [{chunk_id, document_id, relevance_score}]\n    token_count INTEGER,\n    created_at TIMESTAMPTZ DEFAULT NOW()\n);\n```\n\n### 4.2 Row-Level Security\n\n```sql\n-- Create application role (NOT the table owner)\nCREATE ROLE app_user LOGIN PASSWORD '...';\nGRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_user;\n\n-- Enable RLS on all tenant-scoped tables\nALTER TABLE documents ENABLE ROW LEVEL SECURITY;\nALTER TABLE document_chunks ENABLE ROW LEVEL SECURITY;\nALTER TABLE users ENABLE ROW LEVEL SECURITY;\nALTER TABLE conversations ENABLE ROW LEVEL SECURITY;\nALTER TABLE messages ENABLE ROW LEVEL SECURITY;\n\n-- Policy pattern (applied to each table)\nCREATE POLICY tenant_isolation ON documents\n    FOR ALL\n    TO app_user\n    USING (tenant_id = current_setting('app.current_tenant')::uuid)\n    WITH CHECK (tenant_id = current_setting('app.current_tenant')::uuid);\n\n-- Repeat for all tenant-scoped tables\n```\n\n### 4.3 Middleware Enforcement (FastAPI)\n\n```python\n# middleware/tenant.py\nfrom fastapi import Request, Depends\nfrom sqlalchemy.ext.asyncio import AsyncSession\n\nasync def set_tenant_context(request: Request, db: AsyncSession = Depends(get_db)):\n    tenant_id = request.state.tenant_id  # Extracted from JWT in auth middleware\n    await db.execute(text(f\"SET app.current_tenant = '{tenant_id}'\"))\n    # RLS now active \u2014 every query automatically filtered\n```\n\n---\n\n## 5. API Design\n\n### 5.1 Core Endpoints\n\n```\nAuthentication (Cognito-managed):\n  POST   /auth/signup              # Tenant + first admin user creation\n  POST   /auth/login               # Returns JWT with tenant_id, role claims\n\nTenant Management:\n  GET    /api/v1/tenant             # Current tenant info\n  PATCH  /api/v1/tenant             # Update settings (admin only)\n\nUser Management:\n  GET    /api/v1/users              # List users in tenant (admin only)\n  POST   /api/v1/users              # Invite user (admin only)\n  PATCH  /api/v1/users/{id}/role    # Change role (admin only)\n  DELETE /api/v1/users/{id}         # Deactivate user (admin only)\n\nDocuments:\n  GET    /api/v1/documents                    # List (paginated, filterable)\n  POST   /api/v1/documents/upload             # Returns presigned S3 URL\n  POST   /api/v1/documents/upload/confirm     # Triggers processing pipeline\n  GET    /api/v1/documents/{id}               # Detail + status\n  GET    /api/v1/documents/{id}/summary       # Get/generate summary\n  DELETE /api/v1/documents/{id}               # Soft delete (admin/editor)\n\nRAG / Q&A:\n  POST   /api/v1/documents/{id}/ask           # Single-doc Q&A\n  POST   /api/v1/ask                          # Cross-doc Q&A (full product)\n  GET    /api/v1/conversations                # List conversations\n  GET    /api/v1/conversations/{id}           # Conversation history\n  POST   /api/v1/conversations/{id}/messages  # Continue conversation\n\nStreaming:\n  WS     /api/v1/ws/chat                      # WebSocket for streaming LLM responses\n```\n\n### 5.2 Role-Based Access Matrix\n\n| Endpoint | Admin | Editor | Viewer |\n|----------|-------|--------|--------|\n| Manage tenant settings | \u2705 | \u274c | \u274c |\n| Manage users | \u2705 | \u274c | \u274c |\n| Upload documents | \u2705 | \u2705 | \u274c |\n| Delete documents | \u2705 | \u2705 (own) | \u274c |\n| View documents | \u2705 | \u2705 | \u2705 |\n| Ask questions | \u2705 | \u2705 | \u2705 |\n| View conversations | \u2705 | \u2705 (own) | \u2705 (own) |\n\n---\n\n## 6. Document Processing Pipeline \u2014 Detailed Design\n\n### 6.1 Pipeline Flow\n\n```python\n# tasks/document_processing.py (Celery task)\n\n@celery_app.task(bind=True, max_retries=3, default_retry_delay=60)\ndef process_document(self, document_id: str, tenant_id: str):\n    \"\"\"\n    Full document processing pipeline.\n    Runs as ECS Fargate task via Celery worker.\n    \"\"\"\n    try:\n        # 1. Update status\n        update_document_status(document_id, tenant_id, 'processing')\n        \n        # 2. Download from S3\n        file_bytes = download_from_s3(tenant_id, document_id)\n        \n        # 3. Extract text\n        doc_meta = extract_text(file_bytes, file_type)\n        # Returns: {pages: [{page_num, text}], total_pages, total_tokens}\n        \n        # 4. Chunk with parent references\n        chunks = chunk_document(\n            pages=doc_meta['pages'],\n            chunk_size=512,       # tokens\n            chunk_overlap=50,     # tokens\n            parent_size=2048      # tokens \u2014 parent context window\n        )\n        # Returns: [{content, parent_content, chunk_index, token_count, metadata}]\n        \n        # 5. Generate embeddings (batched)\n        embeddings = generate_embeddings_batch(\n            texts=[c['content'] for c in chunks],\n            model='amazon.titan-embed-text-v2:0',\n            batch_size=25  # Bedrock batch limit\n        )\n        \n        # 6. Store chunks + vectors in pgvector\n        store_chunks(tenant_id, document_id, chunks, embeddings)\n        \n        # 7. Generate summary\n        summary = generate_summary(\n            text=doc_meta['pages'][:5],  # First 5 pages for MVP\n            model='anthropic.claude-3-haiku-20240307-v1:0'\n        )\n        \n        # 8. Update document record\n        update_document_complete(document_id, tenant_id, \n                                summary=summary, \n                                page_count=doc_meta['total_pages'])\n        \n    except ExtractionError as e:\n        update_document_status(document_id, tenant_id, 'failed', str(e))\n    except Exception as e:\n        self.retry(exc=e)\n```\n\n### 6.2 Text Extraction\n\n```python\n# services/extraction.py\n\ndef extract_text(file_bytes: bytes, file_type: str) -> dict:\n    if file_type == 'pdf':\n        return extract_pdf(file_bytes)",
+  "agent_stats": {
+    "analyst": {
+      "role": "specialist",
+      "tokens_in": 285,
+      "tokens_out": 1357,
+      "messages_sent": 2,
+      "messages_received": 0
+    },
+    "researcher": {
+      "role": "specialist",
+      "tokens_in": 1761,
+      "tokens_out": 2048,
+      "messages_sent": 2,
+      "messages_received": 0
+    },
+    "synthesizer": {
+      "role": "specialist",
+      "tokens_in": 3788,
+      "tokens_out": 4095,
+      "messages_sent": 2,
+      "messages_received": 0
+    }
+  },
+  "metadata": {
+    "control_shell": "llm_powered",
+    "summarization": true,
+    "llm_stats": {
+      "model": "claude-opus-4-6",
+      "total_calls": 7,
+      "total_tokens_in": 7239,
+      "total_tokens_out": 7998,
+      "total_tokens": 15237,
+      "total_latency_ms": 177508.5129737854,
+      "avg_latency_ms": 25358.358996255058
+    }
+  },
+  "messages": [
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated task",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated contributions",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated summary",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "analyst",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated contributions",
+      "token_count": 0
+    },
+    {
+      "sender": "analyst",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "\n\n## Analyst Contribution\n\n### Key Architectural Decisions That Must Be Made Early\n\n**1. Multi-tenancy Isolation Strategy**\nThe most consequential early decision. Three options with clear tradeoffs:\n- **Shared DB, shared schema with `tenant_id` column** \u2014 Best fit given 100 tenants, small team, and timeline. Row-level security (RLS) in PostgreSQL enforces isolation without operational overhead.\n- Shared DB, separate schemas \u2014 More isolation but migration pain at 100 tenants.\n- Separate DBs \u2014 Ove",
+      "token_count": 1642
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "researcher",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated contributions",
+      "token_count": 0
+    },
+    {
+      "sender": "researcher",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "# Researcher Evidence\n\n## 1. pgvector Performance at Target Scale\n\n**Benchmark data (pgvector v0.7+, HNSW indexes):**\n- At 1M vectors (768 dimensions), HNSW recall@10 achieves ~99% with query latency of **5-15ms** on an `r6g.xlarge` instance. This is well within the analyst's 200ms threshold. Source: pgvector benchmarks by Jonathan Katz (AWS), Supabase engineering blog (2024).\n- At 5M vectors (our ceiling: 1M docs \u00d7 ~5 chunks avg for MVP), latency rises to **15-40ms** with `ef_search=40`. Still ",
+      "token_count": 3809
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "synthesizer",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated contributions",
+      "token_count": 0
+    },
+    {
+      "sender": "synthesizer",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "\n\n# Multi-Tenant RAG SaaS Application \u2014 Comprehensive Development Plan\n\n## 1. Executive Summary\n\nThis plan delivers a document intelligence SaaS platform where tenants upload documents (PDF, DOCX), receive AI-generated summaries, and ask natural-language questions answered via Retrieval-Augmented Generation. The system serves 100 tenants, 1,000 users, and up to 1M total documents on AWS using Python, React, and PostgreSQL.\n\nThe architecture comprises three bounded contexts \u2014 **(1) Multi-tenant C",
+      "token_count": 7883
+    },
+    {
+      "sender": "control_shell",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated summary",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated iteration",
+      "token_count": 0
+    },
+    {
+      "sender": "control_shell",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "STOP: The synthesizer has already produced a comprehensive output (13,686 chars) in round 3, building on solid analysis and research from rounds 1 and 2. The board has gone through the full analyst\u2192researcher\u2192synthesizer pipeline, and the synthesizer's output should constitute a complete architectural plan covering multi-tenancy isolation, RAG pipeline, RBAC, scaling considerations, and tech stack details. Additional rounds would be redundant.",
+      "token_count": 0
+    }
+  ]
+}

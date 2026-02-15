@@ -1,0 +1,376 @@
+{
+  "experiment_id": "fa5ae1fa",
+  "pattern": "joint_persistent_goals",
+  "benchmark": "planning",
+  "model": "claude-opus-4-6",
+  "num_agents": 4,
+  "num_rounds": 4,
+  "total_tokens": 47019,
+  "wall_time_seconds": 486.96039605140686,
+  "quality_score": 62.0,
+  "token_efficiency": 1.3186158786873392,
+  "final_output": "\n\n# Comprehensive Plan: Multi-Tenant SaaS Document RAG Platform\n\n---\n\n## Table of Contents\n\n1. [Executive Summary](#1-executive-summary)\n2. [System Architecture](#2-system-architecture)\n3. [Multi-Tenancy Model](#3-multi-tenancy-model)\n4. [Database Schema Design](#4-database-schema-design)\n5. [RAG Pipeline Architecture](#5-rag-pipeline-architecture)\n6. [AWS Infrastructure](#6-aws-infrastructure)\n7. [API Design](#7-api-design)\n8. [Frontend Architecture](#8-frontend-architecture)\n9. [Feature Breakdown: MVP vs Full Product](#9-feature-breakdown)\n10. [Sprint-by-Sprint Execution Plan](#10-sprint-plan)\n11. [Security Plan](#11-security-plan)\n12. [CI/CD & DevOps](#12-cicd--devops)\n13. [Cost Estimation](#13-cost-estimation)\n14. [Team Allocation](#14-team-allocation)\n15. [Risk Register & Mitigations](#15-risk-register)\n\n---\n\n## 1. Executive Summary\n\n**Product**: A multi-tenant SaaS platform where users upload documents (PDF, DOCX), the system extracts text, generates summaries, and answers questions using Retrieval-Augmented Generation (RAG).\n\n**Scale**: 100 tenants, 1,000 users, up to 1M total documents (10K per tenant).\n\n**Stack**: Python (FastAPI) backend, React frontend, PostgreSQL + pgvector, AWS infrastructure.\n\n**Timeline**: 8-week MVP \u2192 16-week full product.\n\n**Team**: 2 backend engineers, 1 frontend engineer, 1 DevOps engineer.\n\n| Milestone | Week | Deliverable |\n|-----------|------|-------------|\n| Foundation | 1\u20132 | Auth, tenancy, infrastructure, CI/CD |\n| Core Pipeline | 3\u20136 | Document upload, text extraction, chunking, embeddings, basic Q&A |\n| MVP Launch | 7\u20138 | Summarization, polished UI, monitoring, beta release |\n| Full Product | 9\u201316 | RBAC, SSO, advanced RAG, analytics, self-service onboarding, billing |\n\n---\n\n## 2. System Architecture\n\n### 2.1 High-Level Architecture Diagram\n\n```\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                         CloudFront CDN                                          \u2502\n\u2502                   React SPA + Static Assets                                     \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                               \u2502 HTTPS\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                    Application Load Balancer (ALB)                               \u2502\n\u2502                 WAF v2 \u00b7 HTTPS Termination \u00b7 Path Routing                       \u2502\n\u2514\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n     \u2502 /api/*                                                         \u2502 /ws/*\n\u250c\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u2502\n\u2502              ECS Fargate \u2014 API Service Cluster                    \u2502  \u2502\n\u2502                                                                   \u2502  \u2502\n\u2502  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510 \u2502  \u2502\n\u2502  \u2502  Auth    \u2502  \u2502 Tenant   \u2502  \u2502 Document \u2502  \u2502   RAG / Q&A     \u2502 \u2502  \u2502\n\u2502  \u2502 Module   \u2502  \u2502 Module   \u2502  \u2502 Module   \u2502  \u2502   Module        \u2502 \u2502  \u2502\n\u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518 \u2502  \u2502\n\u2502                                                                   \u2502  \u2502\n\u2502  FastAPI Application (Monolith with modular routers)              \u2502  \u2502\n\u2514\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518  \u2502\n     \u2502                  \u2502                  \u2502                           \u2502\n     \u2502           \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2510    \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510           \u2502\n     \u2502           \u2502   Amazon    \u2502    \u2502   Amazon S3         \u2502           \u2502\n     \u2502           \u2502   SQS       \u2502    \u2502   (Document Store)  \u2502           \u2502\n     \u2502           \u2502   Queues    \u2502    \u2502                     \u2502           \u2502\n     \u2502           \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2518    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518           \u2502\n     \u2502                  \u2502                                              \u2502\n     \u2502           \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510          \u2502\n     \u2502           \u2502  ECS Fargate \u2014 Worker Service Cluster    \u2502          \u2502\n     \u2502           \u2502                                          \u2502          \u2502\n     \u2502           \u2502  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u2502          \u2502\n     \u2502           \u2502  \u2502 Document   \u2502  \u2502 Embedding         \u2502  \u2502          \u2502\n     \u2502           \u2502  \u2502 Processor  \u2502  \u2502 Generator         \u2502  \u2502          \u2502\n     \u2502           \u2502  \u2502 (Parse +   \u2502  \u2502 (Chunk + Embed)   \u2502  \u2502          \u2502\n     \u2502           \u2502  \u2502  Extract)  \u2502  \u2502                   \u2502  \u2502          \u2502\n     \u2502           \u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518  \u2502          \u2502\n     \u2502           \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518          \u2502\n     \u2502                  \u2502                                              \u2502\n\u250c\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                         Data Layer                                    \u2502\n\u2502                                                                      \u2502\n\u2502  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510 \u2502\n\u2502  \u2502  RDS PostgreSQL  \u2502  \u2502 ElastiCache  \u2502  \u2502  pgvector Extension   \u2502 \u2502\n\u2502  \u2502  16 + pgvector   \u2502  \u2502 Redis        \u2502  \u2502  (Embeddings stored   \u2502 \u2502\n\u2502  \u2502  Multi-AZ        \u2502  \u2502 (Cache +     \u2502  \u2502   in PostgreSQL)      \u2502 \u2502\n\u2502  \u2502  (Row-Level      \u2502  \u2502  Sessions)   \u2502  \u2502                       \u2502 \u2502\n\u2502  \u2502   Security)      \u2502  \u2502              \u2502  \u2502                       \u2502 \u2502\n\u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518 \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n```\n\n### 2.2 Technology Selection Rationale\n\n| Component | Choice | Rationale |\n|-----------|--------|-----------|\n| **Backend Framework** | FastAPI (Python 3.12) | Async-native, auto OpenAPI docs, Pydantic validation, excellent for ML/AI integration |\n| **Frontend** | React 18 + TypeScript + Vite | Required by spec; Vite for fast builds; TypeScript for reliability |\n| **Database** | PostgreSQL 16 (RDS) | Required by spec; mature, pgvector extension for embeddings |\n| **Vector Store** | pgvector (PostgreSQL extension) | Eliminates separate vector DB; sufficient for 1M vectors; simplifies ops for small team |\n| **Queue** | Amazon SQS | Serverless, no broker to manage; perfect for document processing pipeline |\n| **Cache** | ElastiCache Redis | Session store, rate limiting, query result caching |\n| **Object Storage** | Amazon S3 | Document file storage with tenant-prefixed keys |\n| **Compute** | ECS Fargate | No cluster management; right-sized for small team; simpler than EKS |\n| **CDN** | CloudFront | Frontend SPA delivery, API caching for static responses |\n| **LLM Provider** | OpenAI API (GPT-4o-mini) | Cost-effective, high quality; abstract behind interface for future swap to Bedrock/Claude |\n| **Embedding Model** | OpenAI `text-embedding-3-small` | 1536 dimensions, $0.02/1M tokens, excellent quality/cost ratio |\n| **Document Parsing** | PyMuPDF (PDF) + python-docx (DOCX) | Fast, reliable, no external service dependency |\n\n### 2.3 Monolith-First Architecture Decision\n\nGiven the 4-person team and 8-week MVP timeline, we use a **modular monolith** pattern:\n\n```\nbackend/\n\u251c\u2500\u2500 app/\n\u2502   \u251c\u2500\u2500 main.py                 # FastAPI app factory\n\u2502   \u251c\u2500\u2500 core/\n\u2502   \u2502   \u251c\u2500\u2500 config.py           # Settings via pydantic-settings\n\u2502   \u2502   \u251c\u2500\u2500 security.py         # JWT, password hashing\n\u2502   \u2502   \u251c\u2500\u2500 database.py         # SQLAlchemy async engine + session\n\u2502   \u2502   \u251c\u2500\u2500 dependencies.py     # Tenant context, current user, RBAC\n\u2502   \u2502   \u2514\u2500\u2500 middleware.py       # Tenant resolution, request logging\n\u2502   \u251c\u2500\u2500 modules/\n\u2502   \u2502   \u251c\u2500\u2500 auth/               # Login, registration, tokens\n\u2502   \u2502   \u251c\u2500\u2500 tenants/            # Tenant CRUD, settings\n\u2502   \u2502   \u251c\u2500\u2500 users/              # User management, roles\n\u2502   \u2502   \u251c\u2500\u2500 documents/          # Upload, CRUD, status tracking\n\u2502   \u2502   \u251c\u2500\u2500 rag/                # Chunking, embedding, retrieval, Q&A\n\u2502   \u2502   \u2514\u2500\u2500 admin/              # Platform admin operations\n\u2502   \u251c\u2500\u2500 workers/\n\u2502   \u2502   \u251c\u2500\u2500 document_processor.py   # SQS consumer: parse + extract\n\u2502   \u2502   \u2514\u2500\u2500 embedding_generator.py  # SQS consumer: chunk + embed\n\u2502   \u2514\u2500\u2500 shared/\n\u2502       \u251c\u2500\u2500 models.py           # SQLAlchemy models\n\u2502       \u251c\u2500\u2500 schemas.py          # Shared Pydantic schemas\n\u2502       \u2514\u2500\u2500 exceptions.py       # Custom exception hierarchy\n\u251c\u2500\u2500 alembic/                    # Database migrations\n\u251c\u2500\u2500 tests/\n\u2514\u2500\u2500 Dockerfile\n```\n\nEach module can be extracted into a microservice later if needed \u2014 but for this scale and team size, a monolith deployed as separate API and Worker services is optimal.\n\n---\n\n## 3. Multi-Tenancy Model\n\n### 3.1 Strategy: Shared Database + Row-Level Security (RLS)\n\n| Criterion | Decision | Rationale |\n|-----------|----------|-----------|\n| **Isolation model** | Row-level via `tenant_id` + PostgreSQL RLS | Cost-efficient for 100 tenants; single DB to manage |\n| **Enforcement** | Defense-in-depth: RLS + application middleware | Even application bugs cannot leak cross-tenant data |\n| **Upgrade path** | Pool \u2192 Silo for enterprise tenants | Future: dedicated schemas/databases for premium customers |\n| **Tenant identifier** | `tenant_id UUID NOT NULL` on every tenant-scoped table | Universal foreign key; indexed for query performance |\n\n### 3.2 RLS Policy Implementation\n\n```sql\n-- Enable RLS on every tenant-scoped table\nALTER TABLE documents ENABLE ROW LEVEL SECURITY;\nALTER TABLE documents FORCE ROW LEVEL SECURITY; -- Applies even to table owners\n\n-- Tenant isolation policy\nCREATE POLICY tenant_isolation ON documents\n  USING (tenant_id = current_setting('app.current_tenant_id')::uuid)\n  WITH CHECK (tenant_id = current_setting('app.current_tenant_id')::uuid);\n```\n\n### 3.3 Tenant Resolution Flow\n\n```\nHTTP Request\n  \u2192 ALB \u2192 FastAPI Middleware\n    \u2192 Extract JWT from Authorization header\n    \u2192 Decode JWT \u2192 extract tenant_id, user_id, role\n    \u2192 Validate tenant is active (Redis cache, 5-min TTL)\n    \u2192 Set PostgreSQL session variable:\n        SET LOCAL app.current_tenant_id = '<tenant-uuid>';\n    \u2192 RLS policies automatically filter all queries\n    \u2192 Inject TenantContext into request state for application use\n```\n\n**FastAPI Middleware Implementation:**\n\n```python\nclass TenantMiddleware:\n    async def __call__(self, request: Request, call_next):\n        token = request.headers.get(\"Authorization\", \"\").replace(\"Bearer \", \"\")\n        if token and not request.url.path.startswith(\"/api/v1/auth\"):\n            payload = decode_jwt(token)\n            tenant_id = payload[\"tenant_id\"]\n\n            # Check tenant is active (Redis cache)\n            if not await is_tenant_active(tenant_id):\n                return JSONResponse(status_code=403, content={\"detail\": \"Tenant suspended\"})\n\n            request.state.tenant_id = tenant_id\n            request.state.user_id = payload[\"sub\"]\n            request.state.role = payload[\"role\"]\n        \n        response = await call_next(request)\n        return response\n```\n\n**Database Session with Tenant Context:**\n\n```python\nasync def get_tenant_db(request: Request) -> AsyncGenerator[AsyncSession, None]:\n    async with async_session_factory() as session:\n        tenant_id = request.state.tenant_id\n        await session.execute(\n            text(\"SET LOCAL app.current_tenant_id = :tid\"),\n            {\"tid\": str(tenant_id)}\n        )\n        yield session\n        await session.commit()\n```\n\n---\n\n## 4. Database Schema Design\n\n### 4.1 Complete Schema (PostgreSQL 16 + pgvector)\n\n```sql\n-- ============================================================\n-- EXTENSIONS\n-- ============================================================\nCREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";\nCREATE EXTENSION IF NOT EXISTS \"pgcrypto\";\nCREATE EXTENSION IF NOT EXISTS \"vector\";       -- pgvector\n\n-- ============================================================\n-- TENANT & IDENTITY\n-- ============================================================\n\nCREATE TABLE tenants (\n    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n    name                TEXT NOT NULL,\n    slug                TEXT NOT NULL UNIQUE,\n    plan_tier           TEXT NOT NULL DEFAULT 'free'\n                        CHECK (plan_tier IN ('free', 'pro', 'enterprise')),\n    settings            JSONB NOT NULL DEFAULT '{}',\n    storage_quota_bytes BIGINT NOT NULL DEFAULT 1073741824,  -- 1 GB\n    document_quota      INT NOT NULL DEFAULT 10000,\n    is_active           BOOLEAN NOT NULL DEFAULT true,\n    created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),\n    updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()\n);\n\nCREATE TABLE users (\n    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n    tenant_id       UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,\n    email           TEXT NOT NULL,\n    password_hash   TEXT NOT NULL,\n    display_name    TEXT,\n    role            TEXT NOT NULL DEFAULT 'viewer'\n                    CHECK (role IN ('owner', 'admin', 'editor', 'viewer')),\n    is_active       BOOLEAN NOT NULL DEFAULT true,\n    last_login_at   TIMESTAMPTZ,\n    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),\n    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),\n    UNIQUE (tenant_id, email)\n);\nCREATE INDEX idx_users_tenant ON users(tenant_id);\nCREATE INDEX idx_users_email ON users(email);\n\n-- ============================================================\n-- DOCUMENT MANAGEMENT\n-- ============================================================\n\nCREATE TABLE collections (\n    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n    tenant_id       UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,\n    name            TEXT NOT NULL,\n    description     TEXT,\n    created_by      UUID REFERENCES users(id),\n    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),\n    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()\n);\nCREATE INDEX idx_collections_tenant ON collections(tenant_id);\n\nCREATE TABLE documents (\n    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n    tenant_id       UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,\n    collection_id   UUID REFERENCES collections(id) ON DELETE SET NULL,\n    title           TEXT NOT NULL,\n    mime_type       TEXT NOT NULL CHECK (mime_type IN (\n                        'application/pdf', \n                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'\n                    )),\n    s3_key          TEXT NOT NULL,\n    file_size_bytes BIGINT NOT NULL,\n    page_count      INT,\n    char_count      INT,\n    status          TEXT NOT NULL DEFAULT 'pending'\n                    CHECK (status IN (\n                        'pending', 'uploading', 'extracting', \n                        'chun",
+  "agent_stats": {
+    "planner": {
+      "role": "coordinator",
+      "tokens_in": 7792,
+      "tokens_out": 5120,
+      "messages_sent": 3,
+      "messages_received": 0
+    },
+    "executor_a": {
+      "role": "specialist",
+      "tokens_in": 2144,
+      "tokens_out": 8191,
+      "messages_sent": 8,
+      "messages_received": 0
+    },
+    "executor_b": {
+      "role": "specialist",
+      "tokens_in": 2203,
+      "tokens_out": 8192,
+      "messages_sent": 8,
+      "messages_received": 0
+    },
+    "executor_c": {
+      "role": "specialist",
+      "tokens_in": 5185,
+      "tokens_out": 8192,
+      "messages_sent": 8,
+      "messages_received": 0
+    }
+  },
+  "metadata": {
+    "replans": 0,
+    "status_broadcasts": [
+      {
+        "agent": "executor_a",
+        "round": 1,
+        "status": "committed"
+      },
+      {
+        "agent": "executor_b",
+        "round": 1,
+        "status": "committed"
+      },
+      {
+        "agent": "executor_c",
+        "round": 1,
+        "status": "committed"
+      },
+      {
+        "agent": "executor_a",
+        "round": 2,
+        "status": "committed"
+      },
+      {
+        "agent": "executor_b",
+        "round": 2,
+        "status": "committed"
+      },
+      {
+        "agent": "executor_c",
+        "round": 2,
+        "status": "committed"
+      },
+      {
+        "agent": "executor_a",
+        "round": 3,
+        "status": "committed"
+      },
+      {
+        "agent": "executor_b",
+        "round": 3,
+        "status": "committed"
+      },
+      {
+        "agent": "executor_c",
+        "round": 3,
+        "status": "committed"
+      },
+      {
+        "agent": "executor_a",
+        "round": 4,
+        "status": "committed"
+      },
+      {
+        "agent": "executor_b",
+        "round": 4,
+        "status": "committed"
+      },
+      {
+        "agent": "executor_c",
+        "round": 4,
+        "status": "committed"
+      }
+    ],
+    "final_commitments": {
+      "executor_a": "committed",
+      "executor_b": "committed",
+      "executor_c": "committed"
+    },
+    "llm_stats": {
+      "model": "claude-opus-4-6",
+      "total_calls": 14,
+      "total_tokens_in": 17324,
+      "total_tokens_out": 29695,
+      "total_tokens": 47019,
+      "total_latency_ms": 486954.537153244,
+      "avg_latency_ms": 34782.46693951743
+    }
+  },
+  "messages": [
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated joint_goal",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated plan",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated commitments",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated replans",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated status_broadcasts",
+      "token_count": 0
+    },
+    {
+      "sender": "planner",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated plan",
+      "token_count": 0
+    },
+    {
+      "sender": "planner",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated commitments",
+      "token_count": 0
+    },
+    {
+      "sender": "planner",
+      "receiver": "__broadcast__",
+      "performative": "request",
+      "content": "I'll analyze this complex SaaS planning task and decompose it into three complementary subtasks that together form a comprehensive, executable plan.\n\n**Decomposition rationale:**\n- **Executor A**: System Architecture & Data Design \u2014 the foundational technical blueprint (infrastructure, multi-tenancy model, database schema, RAG pipeline architecture)\n- **Executor B**: Feature Breakdown, Sprint Plan & API Design \u2014 the product/engineering execution plan (user stories, MVP vs full scope, API contrac",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_a",
+      "receiver": "__broadcast__",
+      "performative": "inform",
+      "content": "# System Architecture & Data Design for SaaS Platform with RAG Pipeline\n\n## 1. High-Level System Architecture\n\n```\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                          CDN / Edge Layer (CloudFront)                  \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                          \u2502\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                     API Gateway (Kong / AWS API Gat",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_a",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated status_broadcasts",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_b",
+      "receiver": "__broadcast__",
+      "performative": "inform",
+      "content": "\n\n# Executor B: Feature Breakdown, Sprint Plan & API Design\n\n## Multi-Tenant SaaS Platform \u2014 Product & Engineering Execution Plan\n\n---\n\n## 1. PRODUCT VISION & SCOPE DEFINITION\n\n### 1.1 Core Problem Statement\nBuild a multi-tenant SaaS platform on AWS with tenant isolation, subscription management, and a scalable API layer \u2014 delivered in a 16-week timeline (8 weeks MVP + 8 weeks full scope).\n\n### 1.2 MVP vs Full Scope Definition\n\n| Dimension | MVP (Weeks 1\u20138) | Full Scope (Weeks 9\u201316) |\n|---------",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_b",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated status_broadcasts",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_c",
+      "receiver": "__broadcast__",
+      "performative": "inform",
+      "content": "\n\n# DevOps, Security, Cost & Operational Plan \u2014 Multi-Tenant SaaS Document RAG Application\n\n## 1. AWS Infrastructure Architecture\n\n### 1.1 VPC Design\n\n```\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                        VPC: 10.0.0.0/16                             \u2502\n\u2502                                                                     \u2502\n\u2502  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510   \u2502\n\u2502  \u2502  Public Subnets (3 AZs)                              ",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_c",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated status_broadcasts",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated commitments",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_a",
+      "receiver": "__broadcast__",
+      "performative": "inform",
+      "content": "\n\n# System Architecture & Data Design for SaaS Platform with RAG Pipeline\n\n## 1. High-Level System Architecture\n\n```\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                        CDN / Edge Layer (CloudFront)                        \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                              \u2502\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                      API Gate",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_a",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated status_broadcasts",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_b",
+      "receiver": "__broadcast__",
+      "performative": "inform",
+      "content": "# Executor B: Feature Breakdown, Sprint Plan & API Design\n\n## Multi-Tenant SaaS Platform \u2014 Complete Product & Engineering Execution Plan\n\n---\n\n## 1. PRODUCT VISION & SCOPE DEFINITION\n\n### 1.1 Core Problem Statement\nBuild a multi-tenant SaaS platform on AWS with tenant isolation, subscription management, and a scalable API layer \u2014 delivered in a 16-week timeline (8 weeks MVP + 8 weeks full scope).\n\n### 1.2 MVP vs Full Scope Definition\n\n| Dimension | MVP (Weeks 1\u20138) | Full Scope (Weeks 9\u201316) |\n|--",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_b",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated status_broadcasts",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_c",
+      "receiver": "__broadcast__",
+      "performative": "inform",
+      "content": "\n\n# DevOps, Security, Cost & Operational Plan \u2014 Multi-Tenant SaaS Document RAG Application\n\n---\n\n## 1. AWS Infrastructure Architecture\n\n### 1.1 VPC Design\n\n```\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                          VPC: 10.0.0.0/16                                \u2502\n\u2502                          Region: us-east-1                               \u2502\n\u2502                                                                          \u2502\n\u2502  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_c",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated status_broadcasts",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated commitments",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_a",
+      "receiver": "__broadcast__",
+      "performative": "inform",
+      "content": "\n\n# System Architecture & Data Design for SaaS Platform with RAG Pipeline\n\n## 1. High-Level System Architecture\n\n```\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                          CDN / Edge Layer (CloudFront)                           \u2502\n\u2502                    Static assets, frontend SPA, global caching                   \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                                  \u2502\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_a",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated status_broadcasts",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_b",
+      "receiver": "__broadcast__",
+      "performative": "inform",
+      "content": "# Executor B: Feature Breakdown, Sprint Plan & API Design\n\n## Multi-Tenant SaaS Platform \u2014 Complete Product & Engineering Execution Plan\n\n---\n\n## 1. PRODUCT VISION & SCOPE DEFINITION\n\n### 1.1 Core Problem Statement\nBuild a multi-tenant SaaS platform on AWS with tenant isolation, subscription management, and a scalable API layer \u2014 delivered in a 16-week timeline (8 weeks MVP + 8 weeks full scope).\n\n### 1.2 MVP vs Full Scope Definition\n\n| Dimension | MVP (Weeks 1\u20138) | Full Scope (Weeks 9\u201316) |\n|--",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_b",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated status_broadcasts",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_c",
+      "receiver": "__broadcast__",
+      "performative": "inform",
+      "content": "# DevOps, Security, Cost & Operational Plan \u2014 Multi-Tenant SaaS Document RAG Application\n\n---\n\n## 1. AWS Infrastructure Architecture\n\n### 1.1 VPC Design\n\n```\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                          VPC: 10.0.0.0/16                                    \u2502\n\u2502                          Region: us-east-1                                   \u2502\n\u2502                                                                              \u2502\n\u2502  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_c",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated status_broadcasts",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated commitments",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_a",
+      "receiver": "__broadcast__",
+      "performative": "inform",
+      "content": "\n\n# System Architecture & Data Design for SaaS Platform with RAG Pipeline\n\n## 1. High-Level System Architecture\n\n```\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                            CDN / Edge Layer (CloudFront)                              \u2502\n\u2502                      Static assets, frontend SPA, global caching                     \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                          ",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_a",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated status_broadcasts",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_b",
+      "receiver": "__broadcast__",
+      "performative": "inform",
+      "content": "# Executor B: Feature Breakdown, Sprint Plan & API Design\n\n## Multi-Tenant SaaS Platform \u2014 Complete Product & Engineering Execution Plan\n\n---\n\n## 1. PRODUCT VISION & SCOPE DEFINITION\n\n### 1.1 Core Problem Statement\nBuild a multi-tenant SaaS platform on AWS with tenant isolation, subscription management, and a scalable API layer \u2014 delivered in a 16-week timeline (8 weeks MVP + 8 weeks full scope).\n\n### 1.2 MVP vs Full Scope Definition\n\n| Dimension | MVP (Weeks 1\u20138) | Full Scope (Weeks 9\u201316) |\n|--",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_b",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated status_broadcasts",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_c",
+      "receiver": "__broadcast__",
+      "performative": "inform",
+      "content": "\n\n# DevOps, Security, Cost & Operational Plan \u2014 Multi-Tenant SaaS Document RAG Application\n\n---\n\n## 1. AWS Infrastructure Architecture\n\n### 1.1 VPC Design\n\n```\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                            VPC: 10.0.0.0/16                                      \u2502\n\u2502                            Region: us-east-1                                     \u2502\n\u2502                                                                                  \u2502\n",
+      "token_count": 0
+    },
+    {
+      "sender": "executor_c",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated status_broadcasts",
+      "token_count": 0
+    },
+    {
+      "sender": "system",
+      "receiver": "__blackboard__",
+      "performative": "inform",
+      "content": "Updated commitments",
+      "token_count": 0
+    }
+  ]
+}
