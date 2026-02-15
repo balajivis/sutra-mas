@@ -138,21 +138,7 @@ Agent 0 (Human)  <--  Agent 8 (Clustering)  <--  Agent 6 (Reproducer)  <--  Agen
 
 The pipeline itself is the case study for our companion paper on human-AI co-research (Agent 0).
 
-### 6. The Research Dashboard (`dashboard/`)
-
-Interactive exploration of the full corpus. Next.js 16 + React 19 + D3.js.
-
-| Route | What It Does |
-|-------|-------------|
-| `/explore` | 2D UMAP cluster scatter plot with year slider and zoom |
-| `/lineage` | Citation genealogy across coordination patterns |
-| `/reinvention` | Bipartite view: modern papers reinventing classical concepts |
-| `/papers` | Filterable paper browser (pattern, era, cluster, has_code) |
-| `/search` | Full-text search across the corpus |
-| `/cluster/[id]` | Deep dive into any of the 16 clusters |
-| `/paper/[id]` | Single paper detail with citation graph |
-
-### 7. The Research Knowledge Base (`research/`)
+### 6. The Research Knowledge Base (`research/`)
 
 14 structured research documents (~200KB) formalizing the bridge between classical and modern MAS:
 
@@ -203,15 +189,6 @@ export ANTHROPIC_API_KEY="your-key"
 
 # Run the star result
 python3 -m harness.runner --pattern blackboard_v2 --benchmark code_review --compare
-```
-
-### Run the dashboard locally
-
-```bash
-cd dashboard
-cp .env.example .env   # Edit with your Postgres connection + API keys
-npm install
-npm run dev            # http://localhost:8051
 ```
 
 ### Run the collection pipeline
@@ -305,8 +282,7 @@ sutra/
 │   ├── assembly/            #   Agent implementations
 │   ├── apis/                #   OpenAlex, Crossref, LLM wrappers
 │   └── schema.sql           #   Postgres table definitions
-├── dashboard/               # Interactive research explorer (Next.js + D3)
-├── research/                # 14 structured knowledge base documents (~200KB)
+├── research/                # 10 structured knowledge base documents (~200KB)
 ├── paper/
 │   ├── sutra-main/          #   Paper 1: Lost Canary survey
 │   └── cointelligence/      #   Paper 2: Agent 0
