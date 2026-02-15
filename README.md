@@ -283,9 +283,6 @@ sutra/
 │   ├── apis/                #   OpenAlex, Crossref, LLM wrappers
 │   └── schema.sql           #   Postgres table definitions
 ├── research/                # 10 structured knowledge base documents (~200KB)
-├── paper/
-│   ├── sutra-main/          #   Paper 1: Lost Canary survey
-│   └── cointelligence/      #   Paper 2: Agent 0
 └── scripts/
     └── export-corpus.sh     # Export data from Postgres to static files
 ```
