@@ -1,10 +1,23 @@
-# Sutra: Threading Classical Coordination Through the Age of LLM Agents
+# Sutra: The Largest Structured Corpus of Multi-Agent Systems Research
+
+**36,299 papers collected. 17,969 deep-analyzed. 16-cluster taxonomy. Structured embeddings. Rosetta Stone mappings.**
 
 > *Sutra* (Sanskrit: "thread that connects") -- the Vedic texts that compress vast knowledge into essential threads.
 
-Modern LLM agent systems fail 40-80% of the time. Not because the models are weak -- because the coordination is naive. Thirty years of multi-agent systems research solved these exact problems. Then the citation trail went cold.
+The largest structured corpus of multi-agent systems research ever assembled -- spanning 30 years from classical MAS (1980-2010) through the LLM agent explosion (2023+). Every paper in the analyzed corpus carries coordination patterns, theoretical grounding, classical concept mappings, UMAP embeddings, and cluster assignments produced by an 8-agent LLM pipeline.
 
-This repository reconnects it.
+Modern LLM agent systems fail 40-80% of the time. Not because the models are weak -- because the coordination is naive. Thirty years of multi-agent systems research solved these exact problems. Then the citation trail went cold. This repository reconnects it.
+
+**What makes this different from a paper list:**
+- **36,299 candidate papers** collected from ArXiv, OpenAlex, DBLP, and Crossref (`data/full-paper-list.csv`)
+- **17,969 papers** filtered for MAS relevance and deep-analyzed with structured metadata
+- **Coordination patterns** extracted per paper (blackboard, supervisor, contract net, BDI, debate, stigmergy, ...)
+- **Rosetta Stone entries** mapping each paper's modern concepts back to classical origins
+- **UMAP embeddings** and **16-cluster taxonomy** for visual and programmatic exploration
+- **Citation graph** with ~100K+ directed edges between corpus papers
+- **Lost Canaries** -- high-citation classical papers with near-zero modern uptake
+
+You can query: *"Show me all papers that use a blackboard pattern but don't cite Nii 1986"* -- and get a precise answer.
 
 ## The Problem
 
@@ -21,11 +34,12 @@ The next leap in agentic reliability will come not from better models, but from 
 
 ### 1. The Corpus (`data/`)
 
-**17,969 research papers** spanning 30 years of multi-agent systems research, each with structured metadata extracted by an 8-agent LLM pipeline:
+**36,299 collected → 17,969 analyzed** -- the full pipeline from candidate collection to structured analysis:
 
 | File | Records | Description |
 |------|---------|-------------|
-| `corpus.jsonl` | 17,969 | Full corpus -- one JSON object per paper with title, abstract, year, citations, coordination pattern, theoretical grounding, classical concepts cited, classical concepts *missing*, cluster assignment, UMAP coordinates, and Rosetta Stone entry |
+| `full-paper-list.csv` | 36,299 | Complete candidate list -- every paper collected from ArXiv, OpenAlex, DBLP, Crossref with source, year, venue, external IDs, and whether it passed into the analyzed corpus |
+| `corpus.jsonl` | 17,969 | Analyzed corpus -- one JSON object per paper with title, abstract, year, citations, coordination pattern, theoretical grounding, classical concepts cited, classical concepts *missing*, cluster assignment, UMAP coordinates, and Rosetta Stone entry |
 | `corpus-lite.csv` | 17,969 | Lightweight view -- id, title, year, cluster, pattern, citations, UMAP position |
 | `citation-edges.csv` | ~100K+ | Directed citation graph between corpus papers |
 | `clusters.csv` | ~18K | Cluster assignment + 2D UMAP coordinates per paper |
@@ -34,8 +48,6 @@ The next leap in agentic reliability will come not from better models, but from 
 | `lost-canaries.json` | ~20-30 | High-citation classical papers with near-zero modern uptake -- the forgotten knowledge |
 | `reading-triples.json` | 48 | 3 entry-point papers per cluster (landmark, central, survey) |
 | `corpus-stats.json` | 1 | Summary statistics |
-
-**This is not a paper list.** Every paper has been analyzed for its coordination pattern, theoretical grounding, and relationship to classical MAS concepts. You can query: *"Show me all papers that use a blackboard pattern but don't cite Nii 1986"* -- and get a precise answer.
 
 ### 2. The 16-Pillar Taxonomy
 

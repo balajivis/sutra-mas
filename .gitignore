@@ -29,6 +29,9 @@ Thumbs.db
 *.swp
 *.swo
 
+# Paper sources (private, not for public repo)
+paper/
+
 # LaTeX build artifacts
 *.aux
 *.log
