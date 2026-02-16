@@ -1,0 +1,56 @@
+pattern,pattern_label,benchmark,benchmark_label,quality_score,total_tokens,token_efficiency,num_agents,num_rounds,wall_time_seconds,model,experiment_id,filename
+baseline_single,SingleAgent (baseline),code_review,Code Review,92.0,3185,28.89,1,1,38.0,claude-opus-4-6,26821efd,baseline_single_code_review_20260212_142150.json
+baseline_single,SingleAgent (baseline),research_synthesis,Research Synthesis,50.0,4055,12.33,1,1,69.1,claude-opus-4-6,5b3744a4,baseline_single_research_synthesis_20260212_142514.json
+baseline_single,SingleAgent (baseline),planning,Planning,50.0,8417,5.94,1,1,714.2,claude-opus-4-6,ecb4b0d9,baseline_single_planning_20260212_143553.json
+baseline_single,SingleAgent (baseline),cascading_failure,Cascading Failure V1,82.0,8520,9.62,1,1,131.7,claude-opus-4-6,b0a5e689,baseline_single_cascading_failure_20260212_145604.json
+baseline_single,SingleAgent (baseline),cascading_failure_v2,Cascading Failure V2,62.0,8705,7.12,1,1,146.0,claude-opus-4-6,59dd7df0,baseline_single_cascading_failure_v2_20260212_150827.json
+baseline_naive,NaiveMultiAgent (baseline),code_review,Code Review,92.0,5644,16.3,3,1,69.0,claude-opus-4-6,19cd4b85,baseline_naive_code_review_20260212_142150.json
+baseline_naive,NaiveMultiAgent (baseline),research_synthesis,Research Synthesis,50.0,11445,4.37,3,1,213.6,claude-opus-4-6,57a42cee,baseline_naive_research_synthesis_20260212_142514.json
+baseline_naive,NaiveMultiAgent (baseline),planning,Planning,72.0,12975,5.55,3,1,182.1,claude-opus-4-6,98c1e02b,baseline_naive_planning_20260212_143553.json
+baseline_naive,NaiveMultiAgent (baseline),cascading_failure,Cascading Failure V1,72.0,13281,5.42,3,1,208.4,claude-opus-4-6,fd4890a7,baseline_naive_cascading_failure_20260212_145721.json
+baseline_naive,NaiveMultiAgent (baseline),cascading_failure_v2,Cascading Failure V2,62.0,13835,4.48,3,1,230.2,claude-opus-4-6,350cca18,baseline_naive_cascading_failure_v2_20260212_150951.json
+blackboard,Blackboard V1 (static),code_review,Code Review,62.0,26869,2.31,3,3,181.2,claude-opus-4-6,e2f7c530,blackboard_code_review_20260212_135422.json
+blackboard,Blackboard V1 (static),research_synthesis,Research Synthesis,50.0,27895,1.79,3,3,214.8,claude-opus-4-6,8e285b50,blackboard_research_synthesis_20260212_142514.json
+blackboard,Blackboard V1 (static),planning,Planning,50.0,30249,1.65,3,3,223.6,claude-opus-4-6,186889c2,blackboard_planning_20260212_143553.json
+blackboard,Blackboard V1 (static),cascading_failure,Cascading Failure V1,72.0,28571,2.52,3,3,220.4,claude-opus-4-6,e0654737,blackboard_cascading_failure_20260212_180328.json
+blackboard,Blackboard V1 (static),cascading_failure_v2,Cascading Failure V2,72.0,33706,2.14,3,3,221.6,claude-opus-4-6,a1c88602,blackboard_cascading_failure_v2_20260212_180329.json
+blackboard_v2,Blackboard V2 (LLM shell),code_review,Code Review,95.0,13361,7.11,3,4,112.0,claude-opus-4-6,95b99163,blackboard_v2_code_review_20260212_142150.json
+blackboard_v2,Blackboard V2 (LLM shell),research_synthesis,Research Synthesis,88.0,12079,7.29,3,4,123.4,claude-opus-4-6,3629827e,blackboard_v2_research_synthesis_20260212_180129.json
+blackboard_v2,Blackboard V2 (LLM shell),planning,Planning,72.0,15237,4.73,3,4,177.5,claude-opus-4-6,36eee0bb,blackboard_v2_planning_20260212_180234.json
+blackboard_v2,Blackboard V2 (LLM shell),cascading_failure,Cascading Failure V1,82.0,13882,5.91,3,4,174.7,claude-opus-4-6,a822a5b9,blackboard_v2_cascading_failure_20260212_145648.json
+blackboard_v2,Blackboard V2 (LLM shell),cascading_failure_v2,Cascading Failure V2,82.0,28003,2.93,3,5,255.6,claude-opus-4-6,7a84a739,blackboard_v2_cascading_failure_v2_20260212_151016.json
+contract_net,Contract Net,code_review,Code Review,88.0,36623,2.4,4,3,373.8,claude-opus-4-6,6c7c2611,contract_net_code_review_20260212_173906.json
+contract_net,Contract Net,research_synthesis,Research Synthesis,62.0,41225,1.5,4,3,442.2,claude-opus-4-6,67196206,contract_net_research_synthesis_20260212_180648.json
+contract_net,Contract Net,planning,Planning,72.0,38756,1.86,4,3,382.2,claude-opus-4-6,3ebd50f1,contract_net_planning_20260212_180559.json
+contract_net,Contract Net,cascading_failure,Cascading Failure V1,88.0,41695,2.11,4,3,434.5,claude-opus-4-6,e8495e94,contract_net_cascading_failure_20260212_180702.json
+contract_net,Contract Net,cascading_failure_v2,Cascading Failure V2,42.0,35873,1.17,4,3,373.0,claude-opus-4-6,518e486e,contract_net_cascading_failure_v2_20260212_174821.json
+stigmergy,Stigmergy,code_review,Code Review,92.0,92623,0.99,4,3,474.7,claude-opus-4-6,8b71e905,stigmergy_code_review_20260212_174045.json
+stigmergy,Stigmergy,research_synthesis,Research Synthesis,72.0,95529,0.75,4,3,642.1,claude-opus-4-6,cab4227b,stigmergy_research_synthesis_20260212_181007.json
+stigmergy,Stigmergy,planning,Planning,62.0,96365,0.64,4,3,521.9,claude-opus-4-6,8a3f497c,stigmergy_planning_20260212_180819.json
+stigmergy,Stigmergy,cascading_failure,Cascading Failure V1,88.0,96465,0.91,4,3,604.1,claude-opus-4-6,982f5d3f,stigmergy_cascading_failure_20260212_180952.json
+stigmergy,Stigmergy,cascading_failure_v2,Cascading Failure V2,62.0,96652,0.64,4,3,505.3,claude-opus-4-6,6f578c71,stigmergy_cascading_failure_v2_20260212_175032.json
+bdi,BDI,code_review,Code Review,85.0,7347,11.57,3,3,52.8,claude-opus-4-6,b8dc46f6,bdi_code_review_20260212_173344.json
+bdi,BDI,research_synthesis,Research Synthesis,72.0,51918,1.39,3,3,587.2,claude-opus-4-6,eca0059f,bdi_research_synthesis_20260212_180913.json
+bdi,BDI,planning,Planning,72.0,34054,2.11,3,3,235.4,claude-opus-4-6,8fb4466b,bdi_planning_20260212_180333.json
+bdi,BDI,cascading_failure,Cascading Failure V1,72.0,63419,1.14,3,3,453.4,claude-opus-4-6,0784d87f,bdi_cascading_failure_20260212_180721.json
+bdi,BDI,cascading_failure_v2,Cascading Failure V2,72.0,74236,0.97,3,3,584.9,claude-opus-4-6,fa24fcc5,bdi_cascading_failure_v2_20260212_175153.json
+supervisor,Supervisor,code_review,Code Review,88.0,138425,0.64,4,5,463.0,claude-opus-4-6,56693c2a,supervisor_code_review_20260212_174950.json
+supervisor,Supervisor,research_synthesis,Research Synthesis,72.0,93626,0.77,4,5,505.2,claude-opus-4-6,e6d179b5,supervisor_research_synthesis_20260212_180751.json
+supervisor,Supervisor,planning,Planning,72.0,118013,0.61,4,5,456.1,claude-opus-4-6,c62ec2d8,supervisor_planning_20260212_180712.json
+supervisor,Supervisor,cascading_failure,Cascading Failure V1,72.0,120131,0.6,4,5,562.2,claude-opus-4-6,24f2c89f,supervisor_cascading_failure_20260212_180909.json
+supervisor,Supervisor,cascading_failure_v2,Cascading Failure V2,72.0,118530,0.61,4,5,532.7,claude-opus-4-6,af9be20b,supervisor_cascading_failure_v2_20260212_175101.json
+debate,Debate,code_review,Code Review,82.0,21587,3.8,3,2,172.6,claude-opus-4-6,63902a95,debate_code_review_20260212_173543.json
+debate,Debate,research_synthesis,Research Synthesis,78.0,33406,2.33,3,2,259.7,claude-opus-4-6,9d406901,debate_research_synthesis_20260212_180345.json
+debate,Debate,planning,Planning,72.0,34290,2.1,3,2,262.8,claude-opus-4-6,27d2d46a,debate_planning_20260212_180400.json
+debate,Debate,cascading_failure,Cascading Failure V1,62.0,34800,1.78,3,2,277.0,claude-opus-4-6,4f15f4e5,debate_cascading_failure_20260212_180425.json
+debate,Debate,cascading_failure_v2,Cascading Failure V2,72.0,35722,2.02,3,2,273.6,claude-opus-4-6,6cc84695,debate_cascading_failure_v2_20260212_174641.json
+generator_critic,Generator/Critic,code_review,Code Review,88.0,8440,10.43,2,1,63.8,claude-opus-4-6,13c62af8,generator_critic_code_review_20260212_173354.json
+generator_critic,Generator/Critic,research_synthesis,Research Synthesis,72.0,11053,6.51,2,1,114.0,claude-opus-4-6,74ec3ad1,generator_critic_research_synthesis_20260212_180119.json
+generator_critic,Generator/Critic,planning,Planning,72.0,44163,1.63,2,3,311.1,claude-opus-4-6,1a41151c,generator_critic_planning_20260212_180448.json
+generator_critic,Generator/Critic,cascading_failure,Cascading Failure V1,82.0,44670,1.84,2,3,353.6,claude-opus-4-6,9ba67d7b,generator_critic_cascading_failure_20260212_180542.json
+generator_critic,Generator/Critic,cascading_failure_v2,Cascading Failure V2,72.0,44385,1.62,2,3,350.3,claude-opus-4-6,08b3b0dd,generator_critic_cascading_failure_v2_20260212_174757.json
+joint_persistent_goals,Joint Persistent Goals,code_review,Code Review,90.0,34005,2.65,4,4,321.7,claude-opus-4-6,5c82e809,joint_persistent_goals_code_review_20260212_145919.json
+joint_persistent_goals,Joint Persistent Goals,research_synthesis,Research Synthesis,82.0,22718,3.61,4,4,294.1,claude-opus-4-6,26598d21,joint_persistent_goals_research_synthesis_20260212_180419.json
+joint_persistent_goals,Joint Persistent Goals,planning,Planning,62.0,47019,1.32,4,4,487.0,claude-opus-4-6,fa5ae1fa,joint_persistent_goals_planning_20260212_180743.json
+joint_persistent_goals,Joint Persistent Goals,cascading_failure,Cascading Failure V1,82.0,27129,3.02,4,4,301.2,claude-opus-4-6,19005f96,joint_persistent_goals_cascading_failure_20260212_145854.json
+joint_persistent_goals,Joint Persistent Goals,cascading_failure_v2,Cascading Failure V2,52.0,37567,1.38,4,4,430.7,claude-opus-4-6,f43a2e6e,joint_persistent_goals_cascading_failure_v2_20260212_151312.json
