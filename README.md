@@ -48,11 +48,11 @@ The corpus is organized into 16 clusters representing the major coordination mec
 | 2 | Organizational Design and Team Structures | 2,167 |
 | 3 | Distributed Planning, Problem Solving, and Teamwork | 1,798 |
 | 4 | Agent Communication Languages and Protocols | 281 |
-| 5 | Argumentation and Structured Debate | 388 |
-| 6 | Negotiation, Game Theory, and Economic Paradigms | 1,167 |
+| 5 | Governance, Norms, and AI Safety | 370 |
+| 6 | Negotiation, Argumentation, and Economic Paradigms | 1,555 |
 | 7 | BDI and Cognitive Agent Architectures | 1,970 |
 | 8 | Human-Agent Interaction and HITL | 337 |
-| 9 | Trust, Reputation, and Norms | 658 |
+| 9 | Trust, Reputation, and Social Mechanisms | 288 |
 | 10 | Multi-Agent Engineering: Methodologies, Frameworks, and Platforms | 2,411 |
 | 11 | Multi-Agent Robotics and Embodied Teams | 929 |
 | 12 | Evaluation Benchmarks and Failure Analysis | 955 |
@@ -242,7 +242,10 @@ The corpus was built by a multi-source pipeline and validated through 6 recall t
 
 The initial automated pipeline (ArXiv + OpenAlex) had systematic bias: 75% recall for LLM-agent papers but only 5-25% for AAMAS proceedings. A targeted DBLP import of 9,003 proceedings papers plus 2,314 papers from 12 additional venues resolved the gap. The bias pattern itself -- modern papers found easily, classical proceedings missed entirely -- is direct evidence of the publication ecosystem disconnect this project characterizes.
 
-**Known limitations**: Applied MAS from domain-specific venues (IEEE Transactions, defense journals) has ~80% recall. Single-agent RL foundations cited by MAS surveys (DQN, A3C) are excluded by scope.
+**Known limitations**:
+
+- **Abstract availability**: 9,879 of 17,969 papers (55%) include full abstracts sourced from open-access repositories (ArXiv, OpenAlex, Semantic Scholar). The remaining 8,090 papers (45%) are title-only -- predominantly proceedings imports from DBLP (AAMAS, AAAI, IJCAI) where abstracts are behind publisher paywalls. We do not redistribute copyrighted abstracts. 98.3% of papers (17,655/17,969) carry at least one external identifier (DOI, OpenAlex ID, ArXiv ID, or Semantic Scholar ID) linking to the original source where the full text can be accessed. Coverage: OpenAlex 96.9%, DOI 49.2%, ArXiv 22.3%, Semantic Scholar 3.5%. All 17,969 papers have rich structured analysis (coordination pattern, theoretical grounding, Rosetta Stone entry) produced by Agent 3b -- for title-only papers, analysis was performed using title, citation context, and metadata.
+- **Scope**: Applied MAS from domain-specific venues (IEEE Transactions, defense journals) has ~80% recall. Single-agent RL foundations cited by MAS surveys (DQN, A3C) are excluded by scope.
 
 ## Database Schema
 

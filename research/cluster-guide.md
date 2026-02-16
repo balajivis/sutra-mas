@@ -9,11 +9,11 @@ The corpus of 17,969 papers is partitioned into 16 guided clusters, each represe
 | 2   | [Organizational Design and Team Structures](#2-organizational-design-and-team-structures)                                               | 2,167  |
 | 3   | [Distributed Planning, Problem Solving, and Teamwork](#3-distributed-planning-problem-solving-and-teamwork)                             | 1,798  |
 | 4   | [Agent Communication Languages and Protocols](#4-agent-communication-languages-and-protocols)                                           | 281    |
-| 5   | [Argumentation and Structured Debate](#5-argumentation-and-structured-debate)                                                           | 388    |
-| 6   | [Negotiation, Game Theory, and Economic Paradigms](#6-negotiation-game-theory-and-economic-paradigms)                                   | 1,167  |
+| 5   | [Governance, Norms, and AI Safety](#5-governance-norms-and-ai-safety)                                                                   | 370    |
+| 6   | [Negotiation, Argumentation, and Economic Paradigms](#6-negotiation-argumentation-and-economic-paradigms)                               | 1,555  |
 | 7   | [BDI and Cognitive Agent Architectures](#7-bdi-and-cognitive-agent-architectures)                                                       | 1,970  |
 | 8   | [Human-Agent Interaction and HITL](#8-human-agent-interaction-and-hitl)                                                                 | 337    |
-| 9   | [Trust, Reputation, and Norms](#9-trust-reputation-and-norms)                                                                           | 658    |
+| 9   | [Trust, Reputation, and Social Mechanisms](#9-trust-reputation-and-social-mechanisms)                                                    | 288    |
 | 10  | [Multi-Agent Engineering: Methodologies, Frameworks, and Platforms](#10-multi-agent-engineering-methodologies-frameworks-and-platforms) | 2,411  |
 | 11  | [Multi-Agent Robotics and Embodied Teams](#11-multi-agent-robotics-and-embodied-teams)                                                  | 929    |
 | 12  | [Evaluation Benchmarks and Failure Analysis](#12-evaluation-benchmarks-and-failure-analysis)                                            | 955    |
@@ -48,17 +48,17 @@ Agents decompose complex problems into sub-problems, solve them in parallel, mer
 ## 4. Agent Communication Languages and Protocols
 **281 papers**
 
-Defines the syntax, semantics, and pragmatics of how agents talk to each other: KQML, FIPA ACL, speech acts, performatives, interaction protocols. Unlike *Argumentation* (which structures debate) or *Negotiation* (which models strategic exchange), this cluster is about the messaging layer itself — the envelope, not the content. The modern descendants are MCP (Model Context Protocol), A2A (agent-to-agent protocol), and the question of how to standardize inter-agent messaging.
+Defines the syntax, semantics, and pragmatics of how agents talk to each other: KQML, FIPA ACL, speech acts, performatives, interaction protocols. Unlike *Negotiation and Argumentation* (which structures strategic exchange and debate) this cluster is about the messaging layer itself — the envelope, not the content. The modern descendants are MCP (Model Context Protocol), A2A (agent-to-agent protocol), and the question of how to standardize inter-agent messaging.
 
-## 5. Argumentation and Structured Debate
-**388 papers**
+## 5. Governance, Norms, and AI Safety
+**370 papers**
 
-Agents resolve disagreements through formal argumentation: constructing arguments, attacking or supporting claims, and reaching justified conclusions. Distinct from *Negotiation* (which trades utility) and *Agent Communication* (which specifies message formats), argumentation is about the epistemic structure of disagreement — Dung's abstract frameworks, persuasion dialogues, dialectical proof. Today this maps to LLM debate patterns, generator-critic loops, and multi-agent verification through structured disagreement.
+How societies of agents establish, enforce, and evolve behavioral constraints: social laws, normative frameworks, sanctions, institutional design, constitutional AI, and the mechanisms that keep open multi-agent systems aligned with intended behavior. Unlike *Trust and Reputation* (which models agent-level credibility signals) or *Organizational Design* (which defines static team topology), governance addresses the regulatory layer — what agents *must not* do, what happens when they violate constraints, and how norms adapt as the system evolves. Classical lineage: Shoham & Tennenholtz's social laws (1995), Dignum's normative MAS, Castelfranchi's social commitment theory. Modern relevance: guardrails, content filtering, EU AI Act compliance, constitutional AI (Bai et al. 2022), RLHF alignment constraints, and the emerging question of how to govern autonomous LLM agents that operate in open environments. Promoted from the governance half of the former Trust/Reputation/Norms cluster — the 7.3:1 terminological burial ratio (4,834 governance-adjacent papers scattered across other clusters vs. 658 in the home cluster) demonstrated that governance deserved first-class pillar status.
 
-## 6. Negotiation, Game Theory, and Economic Paradigms
-**1,167 papers**
+## 6. Negotiation, Argumentation, and Economic Paradigms
+**1,555 papers**
 
-Agents with competing or partially aligned interests reach agreements through strategic interaction: Nash equilibria, mechanism design, VCG auctions, bargaining protocols, coalition formation, and Shapley value allocations. Unlike *Contract Net* (a specific allocation protocol) or *Argumentation* (epistemic disagreements), this cluster covers the full game-theoretic and economic landscape of self-interested agents. Modern relevance includes resource allocation among competing LLM agents, incentive design for multi-agent cooperation, and coalition structure generation.
+Agents with competing or partially aligned interests reach agreements through strategic interaction — whether by trading utility (Nash equilibria, mechanism design, VCG auctions, bargaining protocols), by structured argumentation (Dung's abstract frameworks, persuasion dialogues, argumentation-based negotiation), or by coalition formation (Shapley values, core stability). Unlike *Contract Net* (a specific allocation protocol) or *Agent Communication* (message-layer semantics), this cluster covers the full landscape of how self-interested agents resolve conflicts and allocate resources. Absorbs the former Argumentation and Structured Debate cluster: 56% of argumentation papers already use negotiation terminology, and argumentation-based negotiation (Rahwan, Amgoud, Jennings) is one of classical MAS's most cited subfields — the epistemic structure of disagreement and the economic structure of exchange are two faces of the same coordination problem. Modern relevance includes LLM debate patterns, generator-critic loops, resource allocation among competing agents, incentive design for multi-agent cooperation, and multi-agent verification through structured disagreement.
 
 ## 7. BDI and Cognitive Agent Architectures
 **1,970 papers**
@@ -68,12 +68,12 @@ The internal architecture of a single agent: beliefs, desires, intentions, plan 
 ## 8. Human-Agent Interaction and HITL
 **337 papers**
 
-Addresses the boundary between human and artificial agents: adjustable autonomy, mixed-initiative interaction, trust calibration, when to escalate, and how to keep humans meaningfully in the loop. Unlike *Trust and Norms* (which models computational trust between agents), this cluster is specifically about human-machine teaming — the human as a first-class agent in the system. Maps directly to modern HITL patterns: approval queues, escalation triggers, and the graduated autonomy question in production AI deployments.
+Addresses the boundary between human and artificial agents: adjustable autonomy, mixed-initiative interaction, trust calibration, when to escalate, and how to keep humans meaningfully in the loop. Unlike *Trust and Reputation* (which models computational trust between agents), this cluster is specifically about human-machine teaming — the human as a first-class agent in the system. Maps directly to modern HITL patterns: approval queues, escalation triggers, and the graduated autonomy question in production AI deployments.
 
-## 9. Trust, Reputation, and Norms
-**658 papers**
+## 9. Trust, Reputation, and Social Mechanisms
+**288 papers**
 
-Models how agents assess each other's reliability (trust/reputation) and how societies of agents enforce behavioral constraints (norms, sanctions, social laws). Unlike *Human-Agent Interaction* (focused on the human-machine boundary) or *Modeling Artificial Societies* (focused on simulation), this cluster addresses the governance layer — how agents establish, maintain, and enforce trustworthiness in open systems. Ranges from witness-based reputation and certified trust to normative MAS, with modern relevance in guardrails, content filtering, and agent safety constraints.
+Models how agents assess each other's reliability through direct experience, witness reports, and institutional certification — and how these assessments drive delegation, coalition selection, and interaction partner choice. Unlike *Governance* (which enforces behavioral constraints top-down) or *Human-Agent Interaction* (focused on human-machine trust calibration), this cluster addresses the bottom-up credibility layer: how agents build, propagate, and reason about trustworthiness in open systems where agents may deceive, free-ride, or defect. Classical lineage: Marsh's formalization of trust (1994), Sabater & Sierra's ReGreT, witness-based reputation (Yu & Singh), certified trust (Ramchurn et al.). Modern relevance includes LLM agent reliability scoring, model selection based on past performance, delegation confidence thresholds, and the open question of how to establish trust between agents with no shared history. Narrowed from the former Trust/Reputation/Norms cluster after governance, norms, and safety concerns were promoted to their own pillar (C5).
 
 ## 10. Multi-Agent Engineering: Methodologies, Frameworks, and Platforms
 **2,411 papers**
@@ -103,7 +103,7 @@ How agents improve their behavior over time through experience, interaction, and
 ## 15. Modeling and Simulating Artificial Societies
 **374 papers**
 
-Uses agent-based models to study emergent social phenomena: opinion dynamics, cooperation evolution, segregation, contagion, and economic markets. Unlike *Organizational Design* (which prescribes structure) or *Trust and Norms* (which designs governance mechanisms), MABS treats agent societies as objects of scientific study — observing what emerges from simple interaction rules. The lineage runs from Epstein & Axtell's Sugarscape and Schelling's segregation model through ODD protocols to modern generative agents simulating human social behavior.
+Uses agent-based models to study emergent social phenomena: opinion dynamics, cooperation evolution, segregation, contagion, and economic markets. Unlike *Organizational Design* (which prescribes structure) or *Governance* (which enforces behavioral constraints), MABS treats agent societies as objects of scientific study — observing what emerges from simple interaction rules. The lineage runs from Epstein & Axtell's Sugarscape and Schelling's segregation model through ODD protocols to modern generative agents simulating human social behavior.
 
 Notes:
 2,616 papers address memory-adjacent concerns, yet only 107 treat memory as a first-class architectural concern —
