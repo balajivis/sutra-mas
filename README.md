@@ -51,28 +51,70 @@ The next leap in agentic reliability will come not from better models, but from 
 
 ### 2. The 16-Pillar Taxonomy
 
-The corpus is organized into 16 clusters representing the major coordination mechanisms in MAS research:
+The corpus is organized into 16 clusters representing the major coordination mechanisms in MAS research. Each pillar has a classical landmark paper and a modern entry point -- start with any pair to understand both the origin and the current state of that coordination mechanism.
 
-| # | Cluster | Papers |
-|---|---------|--------|
-| 0 | Shared Medium Coordination | 1,096 |
-| 1 | Contract Net and Task Allocation | 945 |
-| 2 | Organizational Design and Team Structures | 2,167 |
-| 3 | Distributed Planning, Problem Solving, and Teamwork | 1,798 |
-| 4 | Agent Communication Languages and Protocols | 281 |
-| 5 | Governance, Norms, and AI Safety | 370 |
-| 6 | Negotiation, Argumentation, and Economic Paradigms | 1,555 |
-| 7 | BDI and Cognitive Agent Architectures | 1,970 |
-| 8 | Human-Agent Interaction and HITL | 337 |
-| 9 | Trust, Reputation, and Social Mechanisms | 288 |
-| 10 | Multi-Agent Engineering: Methodologies, Frameworks, and Platforms | 2,411 |
-| 11 | Multi-Agent Robotics and Embodied Teams | 929 |
-| 12 | Evaluation Benchmarks and Failure Analysis | 955 |
-| 13 | Memory and Context Management | 107 |
-| 14 | Learning and Adaptation | 2,386 |
-| 15 | Modeling and Simulating Artificial Societies | 374 |
+| # | Pillar | Papers | Classical Landmark | Modern Entry Point |
+|---|--------|-------:|--------------------|--------------------|
+| 0 | **Shared Medium Coordination** | 1,096 | [Blackboard Systems](https://doi.org/10.1007/978-1-4615-2211-9_2) (Nii 1986) | [LbMAS: Blackboard for LLM Agents](https://arxiv.org/abs/2503.10939) (2025) |
+| 1 | **Contract Net & Task Allocation** | 945 | [The Contract Net Protocol](https://doi.org/10.1109/TC.1980.1675516) (Smith 1980) | [AutoGen: Next-Gen LLM Applications](https://arxiv.org/abs/2308.08155) (Wu et al. 2023) |
+| 2 | **Organizational Design & Team Structures** | 2,167 | [Survey of Multi-Agent Organizational Paradigms](https://doi.org/10.1017/s0269888905000317) (Horling & Lesser 2004) | [MetaGPT: Multi-Agent Collaboration](https://arxiv.org/abs/2308.00352) (Hong et al. 2023) |
+| 3 | **Distributed Planning & Teamwork** | 1,798 | [Collaborative Plans for Complex Group Action](https://doi.org/10.1016/0004-3702(95)00103-4) (Grosz & Kraus 1996) | [ChatDev: Communicative Agents for Software](https://arxiv.org/abs/2307.07924) (Qian et al. 2023) |
+| 4 | **Agent Communication Languages & Protocols** | 281 | [KQML: Agent Communication Language](https://doi.org/10.1145/191246.191322) (Finin et al. 1994) | [Model Context Protocol](https://modelcontextprotocol.io/specification) (Anthropic 2025) |
+| 5 | **Governance, Norms & AI Safety** | 370 | [Governing the Commons](https://doi.org/10.1017/CBO9780511807763) (Ostrom 1990) | [AgentSpec: Runtime Constraints](https://arxiv.org/abs/2503.18666) (2025) |
+| 6 | **Negotiation, Argumentation & Economic Paradigms** | 1,555 | [Rules of Encounter](https://mitpress.mit.edu/9780262181570/) (Rosenschein & Zlotkin 1994) | [Human-Level Play in Diplomacy](https://doi.org/10.1126/science.ade9097) (Meta FAIR 2022) |
+| 7 | **BDI & Cognitive Agent Architectures** | 1,970 | [BDI Agents: From Theory to Practice](https://www.aaai.org/Papers/ICMAS/1995/ICMAS95-042.pdf) (Rao & Georgeff 1995) | [NatBDI: Natural-Language BDI](https://dl.acm.org/doi/10.5555/3635637.3663103) (2024) |
+| 8 | **Human-Agent Interaction & HITL** | 337 | [Types and Levels of Human Interaction with Automation](https://doi.org/10.1109/3468.844354) (Parasuraman et al. 2000) | [Building Effective Agents](https://docs.anthropic.com/en/docs/build-with-claude/agent-patterns) (Anthropic 2025) |
+| 9 | **Trust, Reputation & Social Mechanisms** | 288 | [Review on Computational Trust and Reputation](https://doi.org/10.1007/s10462-004-0041-5) (Sabater & Sierra 2005) | [TrustLLM: Trustworthiness in LLMs](https://arxiv.org/abs/2401.05561) (2024) |
+| 10 | **Multi-Agent Engineering** | 2,411 | [The Gaia Methodology](https://doi.org/10.1023/a:1010071910869) (Wooldridge et al. 2000) | [LangGraph: Resilient Language Agents](https://github.com/langchain-ai/langgraph) (LangChain 2024) |
+| 11 | **Multi-Agent Robotics & Embodied Teams** | 929 | [RoboCup: The Robot World Cup](https://doi.org/10.1609/aimag.v18i1.1276) (Kitano et al. 1997) | [LLM2Swarm: Robot Swarms that Reason and Collaborate](https://arxiv.org/abs/2410.11387) (2024) |
+| 12 | **Evaluation Benchmarks & Failure Analysis** | 955 | [A Multi-Agent Systems Turing Challenge](https://link.springer.com/chapter/10.1007/978-3-642-44927-7_1) (2013) | [Why Do Multi-Agent LLM Systems Fail?](https://arxiv.org/abs/2503.13657) (Cemri et al. 2025) |
+| 13 | **Memory & Context Management** | 107 | --- | [MemGPT: LLMs as Operating Systems](https://arxiv.org/abs/2310.08560) (Packer et al. 2023) |
+| 14 | **Learning & Adaptation** | 2,386 | [Ant System: Cooperating Agents](https://doi.org/10.1109/3477.484436) (Dorigo et al. 1996) | [Multiagent Finetuning: Self Improvement](https://arxiv.org/abs/2501.05707) (2025) |
+| 15 | **Modeling & Simulating Artificial Societies** | 374 | [Flocks, Herds and Schools](https://doi.org/10.1145/37401.37406) (Reynolds 1987) | [Generative Agents: Interactive Simulacra](https://arxiv.org/abs/2304.03442) (Park et al. 2023) |
 
 The taxonomy was produced by a semi-supervised method: domain expertise defines the 16 cluster anchors (50-150 word descriptions covering classical and modern terminology), and cosine similarity over structured embeddings assigns papers to anchors. See `research/cluster-guide.md` for the full taxonomy rationale, including three generations of design iterations and the boundary decisions.
+
+#### Era Distribution
+
+The corpus spans 1948--2026. The 2000s peak reflects the golden age of classical MAS conferences (AAMAS, EUMAS, CEEMAS). The 2025+ surge reflects the LLM agent explosion.
+
+| Era | Collected | High-Relevance | Avg Citations | Median Citations |
+|-----|----------:|---------------:|--------------:|-----------------:|
+| <1990 | 562 | 225 | 797 | 94 |
+| 1990s | 2,788 | 1,884 | 125 | 30 |
+| 2000s | 8,839 | 6,103 | 80 | 22 |
+| 2010s | 9,407 | 3,541 | 64 | 14 |
+| 2020--22 | 2,667 | 812 | 50 | 8 |
+| 2023--24 | 3,853 | 1,588 | 54 | 3 |
+| 2025+ | 7,261 | 3,574 | 115 | 2 |
+| **Total** | **36,299** | **17,956** | **92** | **17** |
+
+The high average citations for 2025+ (115) despite recency reflects highly-cited LLM agent papers (GPT-4, AutoGen, MetaGPT) that accumulated citations rapidly.
+
+#### Per-Pillar Era Breakdown
+
+Where do the classical and modern papers actually live? This table shows the era split per pillar (Classical = pre-2010, Transition = 2010--2022, Modern = 2023+). Pillars where classical dominates have deep established theory; pillars where modern dominates are frontier areas driven by LLM agents.
+
+| # | Pillar | Total | Classical | Trans. | Modern | Character |
+|---|--------|------:|----------:|-------:|-------:|-----------|
+| 0 | Shared Medium | 1,093 | 502 | 160 | 424 | Balanced -- classical theory, modern revival |
+| 1 | Contract Net & Task Alloc. | 945 | 649 | 235 | 58 | **Classical-dominated** -- mature theory, low modern uptake |
+| 2 | Org. Design & Teams | 2,164 | 928 | 405 | 796 | Balanced -- large and active in both eras |
+| 3 | Dist. Planning & Teamwork | 1,798 | 909 | 649 | 234 | Classical-leaning -- consensus/formation theory |
+| 4 | ACL & Protocols | 281 | 233 | 28 | 18 | **Classical-dominated** -- FIPA/KQML era; MCP is the modern revival |
+| 5 | Governance & Norms | 370 | 210 | 105 | 55 | Classical-leaning -- normative MAS, institutional design |
+| 6 | Negotiation & Argumentation | 1,555 | 730 | 548 | 272 | Balanced -- game theory + LLM negotiation |
+| 7 | BDI & Cognitive Arch. | 1,968 | 1,003 | 321 | 625 | Balanced -- classical BDI meets LLM reasoning |
+| 8 | Human-Agent & HITL | 334 | 63 | 68 | 199 | Modern-leaning -- growing with AI safety focus |
+| 9 | Trust & Reputation | 288 | 170 | 85 | 33 | **Classical-dominated** -- computational trust theory |
+| 10 | Engineering & Frameworks | 2,411 | 1,489 | 343 | 553 | Classical-leaning -- JADE/JACK era, but LangGraph growing |
+| 11 | Robotics & Embodied | 929 | 421 | 408 | 91 | Classical-leaning -- formation control, swarms |
+| 12 | Eval. & Failure Analysis | 954 | 238 | 158 | 515 | **Modern-dominated** -- benchmarking is new |
+| 13 | Memory & Context | 107 | 4 | 8 | 94 | **Modern-dominated** -- emerged with LLM agents |
+| 14 | Learning & Adaptation | 2,385 | 483 | 726 | 1,116 | **Modern-dominated** -- MARL explosion post-2015 |
+| 15 | Artificial Societies | 374 | 189 | 85 | 91 | Balanced -- ABMS meets Generative Agents |
+
+The most striking contrasts: **Contract Net** (69% classical, 6% modern) -- the foundational task allocation protocol with almost no modern continuation. **Memory** (4% classical, 88% modern) -- a pillar that barely existed before LLM agents. **ACL & Protocols** (83% classical, 6% modern) -- FIPA/KQML built the theory; MCP/A2A are just beginning to rebuild it.
 
 ### 3. The Rosetta Stone
 
